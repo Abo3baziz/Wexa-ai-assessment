@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | T-010 |
 | **Priority** | P1 |
-| **Status** | todo |
+| **Status** | done |
 | **Type** | feature |
 | **Branch** | feature/related-patients |
 | **Depends on** | T-008 |
@@ -34,7 +34,10 @@ selecting a related patient to explore them, and handles empty/error states.
 - Graph rendering (T-009), path explorer (T-011).
 
 ## Acceptance criteria
-- [ ] Related patients listed with shared reasons + counts
-- [ ] Click-through switches context to the related patient
-- [ ] Empty and error states handled
-- [ ] Typecheck/lint clean
+- [x] Related patients listed with shared reasons + counts — `components/RelatedPatients.tsx` fetches `/api/patients/[id]/related`, renders each patient with name, publicId, reason chips (Shared disease/medication/doctor) and a connection-count badge.
+- [x] Click-through switches context to the related patient — selecting a related patient calls the explorer's `loadPatient(publicId)`, relocating the overview (verified bidirectionally in the browser).
+- [x] Empty and error states handled — "No related patients found" empty state plus error + retry, matching the T-008 state vocabulary.
+- [x] Typecheck/lint clean.
+
+## Notes
+- Panel is a client component; data flows through `lib/fetchApi.ts` (client-safe, no server-only DB imports).

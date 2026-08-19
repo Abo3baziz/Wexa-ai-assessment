@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { PatientOverview } from "@/components/PatientOverview";
 import { PatientSearch } from "@/components/PatientSearch";
+import { RelatedPatients } from "@/components/RelatedPatients";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingState } from "@/components/states/LoadingState";
@@ -84,7 +85,13 @@ export default function Home() {
         ) : null}
 
         {view.kind === "success" ? (
-          <PatientOverview overview={view.data} />
+          <>
+            <PatientOverview overview={view.data} />
+            <RelatedPatients
+              publicId={view.data.patient.publicId}
+              onSelect={(publicId) => void loadPatient(publicId)}
+            />
+          </>
         ) : null}
       </main>
     </div>
