@@ -46,13 +46,26 @@ export function findPathBetween({
   toLabel,
   maxDepth,
 }: PathParams) {
+  const depth = clampDepth(maxDepth);
   const query = `
     MATCH (a:Patient {publicId: $fromId})
     MATCH (b:${toLabel} {id: $toId})
-    MATCH p = shortestPath((a)-[*1..$maxDepth]-(b))
+    MATCH p = shortestPath((a)-[*1..${depth}]-(b))
     RETURN
       [n IN nodes(p) | {id: coalesce(n.publicId, n.id), label: head(labels(n))}] AS nodes,
       [r IN relationships(p) | {type: type(r)}] AS relationships
   `;
-  return runQuery<PathStepRow>(query, { fromId, toId, maxDepth });
+  return runQuery<PathStepRow>(query, { fromId, toId });
+}
+
+/**
+ * Neo4j forbids parameters inside variable-length relationship bounds
+ * (`[*1..$max]` is a syntax error), so the depth must appear as a literal.
+ * Clamp to the safe range [1, 10]; callers validate the user-supplied value
+ * before reaching here.
+ */
+function clampDepth(maxDepth: number): number {
+  if (!Number.isInteger(maxDepth) || maxDepth < 1) return 1;
+  if (maxDepth > 10) return 10;
+  return maxDepth;
 }

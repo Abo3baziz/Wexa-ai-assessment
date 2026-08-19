@@ -21,9 +21,11 @@ export interface ConnectedPatientRow {
   pathCount: number;
 }
 
-export const CONNECTED_PATIENTS_QUERY = `
+export const MAX_DEPTH = 10;
+
+export const CONNECTED_PATIENTS_QUERY = (maxDepth: number) => `
   MATCH path = (p:Patient {publicId: $publicId})
-    -[:HAS_DISEASE|TAKES|HAD_VISIT*1..$maxDepth]-
+    -[:HAS_DISEASE|TAKES|HAD_VISIT*1..${clampDepth(maxDepth)}]-
     (other:Patient)
   WHERE other <> p
     AND ALL(r IN relationships(path) WHERE type(r) IN ['HAS_DISEASE','TAKES','HAD_VISIT'])
@@ -35,10 +37,19 @@ export const CONNECTED_PATIENTS_QUERY = `
   LIMIT $limit
 `;
 
+/**
+ * Neo4j forbids parameters inside variable-length relationship bounds, so the
+ * depth must appear as a literal. Clamp to the safe range [1, 10].
+ */
+function clampDepth(maxDepth: number): number {
+  if (!Number.isInteger(maxDepth) || maxDepth < 1) return 1;
+  if (maxDepth > MAX_DEPTH) return MAX_DEPTH;
+  return maxDepth;
+}
+
 export function findConnectedPatients(publicId: string, maxDepth = 3, limit = 12) {
-  return runQuery<ConnectedPatientRow>(CONNECTED_PATIENTS_QUERY, {
+  return runQuery<ConnectedPatientRow>(CONNECTED_PATIENTS_QUERY(maxDepth), {
     publicId,
-    maxDepth,
     limit,
   });
 }

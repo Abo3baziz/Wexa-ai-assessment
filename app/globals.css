@@ -16,4 +16,48 @@ body {
   color: #e7ecf5;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Theme the browser surfaces so the page reads built, not assembled. */
+::selection {
+  background-color: rgba(91, 140, 255, 0.35);
+  color: #ffffff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #243150 transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #243150;
+  border-radius: 9999px;
+  border: 2px solid #0b1020;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::placeholder {
+  color: #6b7894;
+}
+
+:focus-visible {
+  outline: 2px solid #5b8cff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

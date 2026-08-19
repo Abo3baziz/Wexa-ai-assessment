@@ -20,7 +20,7 @@ _None._ This is a synthetic-data demonstration app; no P0 items.
 | T-005 | [cypher-queries](./T-005-cypher-queries.md) | Parameterized Cypher query layer (Q1–Q5 + search) | done |
 | T-006 | [services](./T-006-services.md) | Service mappers and param validation | done |
 | T-007 | [api-routes](./T-007-api-routes.md) | API routes, error envelope, health endpoint | done |
-| T-008 | [core-ui](./T-008-core-ui.md) | Core UI shell, search, overview, states | todo |
+| T-008 | [core-ui](./T-008-core-ui.md) | Core UI shell, search, overview, states | done |
 | T-010 | [related-patients](./T-010-related-patients.md) | Related patients panel + click-through | todo |
 | T-013 | [integration-tests](./T-013-integration-tests.md) | Integration tests gated on COGNODB_URI | todo |
 | T-015 | [deploy-vercel](./T-015-deploy-vercel.md) | Deploy to Vercel + verify live demo | todo |
