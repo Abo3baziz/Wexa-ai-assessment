@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | T-007 |
 | **Priority** | P1 |
-| **Status** | todo |
+| **Status** | done |
 | **Type** | feature |
 | **Branch** | feature/api-routes |
 | **Depends on** | T-006 |
@@ -39,8 +39,12 @@ messages with a `retry` flag.
 - UI components, Cypher, styling.
 
 ## Acceptance criteria
-- [ ] All endpoints return the uniform envelope
-- [ ] DB-unavailable produces friendly message + `retry: true`, no creds/stack
-- [ ] Invalid params return 400 without DB access
-- [ ] `/api/health` reflects connectivity
-- [ ] `npm run typecheck` passes
+- [x] All endpoints return the uniform envelope — `lib/api/types.ts` (`ApiResponse<T>`); every route returns `NextResponse.json(result.body)` via `lib/api/errors.ts` `handle()`/`toHttpError()`.
+- [x] DB-unavailable produces friendly message + `retry: true`, no creds/stack — `CognodbError.retryable`/`ConfigError` → 503 with a friendly message; generic 500 otherwise; no raw errors surfaced.
+- [x] Invalid params return 400 without DB access — `ValidationError` → 400 via `requirePublicId`/`requireSearchQuery`/`requireEntityId`/`requirePathTargetLabel`/`requireDepth`/`requireOptionalInt`, thrown before any query call.
+- [x] `/api/health` reflects connectivity — calls `verifyConnection()`; success `{ok,connected:true}`, failure bubbles to a 503 retryable error.
+- [x] `npm run typecheck` passes.
+
+## Notes
+- Routes call query+service functions directly; no Cypher in any handler.
+- `/api/path` POST validates `toLabel` against the query-layer allowlist before DB.
