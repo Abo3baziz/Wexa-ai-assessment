@@ -153,7 +153,7 @@ export function PatientSearch({
   const isEmpty = showResults && results.length === 0;
 
   return (
-    <div ref={rootRef} className="w-full max-w-xl">
+    <div ref={rootRef} className="relative w-full max-w-xl">
       <div className="relative">
         <svg
           className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-muted"
