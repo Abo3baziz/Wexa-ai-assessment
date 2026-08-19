@@ -6,7 +6,7 @@ function pretty(key: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-const HIDDEN_KEYS = new Set(["id", "publicId", "firstName", "lastName"]);
+const HIDDEN_KEYS = new Set(["id", "publicId", "nationalId", "firstName", "lastName"]);
 
 export function NodeDetailPanel({
   node,

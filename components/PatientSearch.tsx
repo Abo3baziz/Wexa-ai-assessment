@@ -152,7 +152,7 @@ export function PatientSearch({
               ? `result-${active}`
               : undefined
           }
-          placeholder="Search a patient, doctor, disease, or medication"
+          placeholder="Search a patient, national ID, doctor, disease, or medication"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}

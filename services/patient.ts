@@ -38,6 +38,7 @@ export function mapPatientOverview(rows: PatientHistoryRow[]): PatientOverview {
       patient: {
         id: "",
         publicId: "",
+        nationalId: "",
         firstName: "",
         lastName: "",
         dateOfBirth: "",
@@ -154,6 +155,7 @@ export function mapCarePathway(rows: CarePathwayRow[]): CarePathway {
       patient: {
         id: "",
         publicId: "",
+        nationalId: "",
         firstName: "",
         lastName: "",
         dateOfBirth: "",

@@ -8,7 +8,7 @@ update this file first and keep the Mermaid diagram in sync.
 
 | Label | Properties | Notes |
 |-------|-----------|-------|
-| `Patient` | `id`, `publicId`, `firstName`, `lastName`, `dateOfBirth`, `gender` | `id` is the internal uuid; `publicId` (e.g. `P-1001`) is shown in the UI. |
+| `Patient` | `id`, `publicId`, `nationalId`, `firstName`, `lastName`, `dateOfBirth`, `gender` | `id` is the internal uuid; `publicId` (e.g. `P-1001`) is shown in the UI; `nationalId` is a unique 12-digit national ID. |
 | `Visit` | `id`, `visitDate`, `reason`, `notes` | A single encounter with a doctor. |
 | `Doctor` | `id`, `name`, `specialty` | A treating physician. |
 | `Department` | `id`, `name` | A clinical unit (e.g. Cardiology). |

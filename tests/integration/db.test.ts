@@ -42,6 +42,7 @@ gated("CognoDB integration (live instance)", () => {
     const overview = mapPatientOverview(rows);
     expect(overview.patient.publicId).toBe("P-1001");
     expect(overview.patient.firstName).not.toBe("");
+    expect(overview.patient.nationalId).not.toBe("");
     expect(overview.stats.visits).toBeGreaterThan(0);
     expect(overview.stats.diseases).toBeGreaterThan(0);
   });
@@ -95,6 +96,18 @@ gated("CognoDB integration (live instance)", () => {
   it("returns empty search matches for a nonsense query", async () => {
     const rows = await searchEntities("zzzz-no-such-term", 8);
     expect(mapSearchResults(rows)).toHaveLength(0);
+  });
+
+  it("finds a patient by national ID", async () => {
+    const history = await findPatientHistory("P-1001");
+    const nationalId = history[0]?.patient.nationalId ?? "";
+    expect(nationalId).not.toBe("");
+
+    const rows = await searchEntities(nationalId, 8);
+    const results = mapSearchResults(rows);
+    const patient = results.find((r) => r.type === "Patient");
+    expect(patient).toBeDefined();
+    expect(patient?.subtitle).toBe(nationalId);
   });
 
   it("rejects when the database is unreachable", async () => {

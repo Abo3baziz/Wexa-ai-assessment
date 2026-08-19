@@ -25,6 +25,7 @@ export function patientFromRecord(value: UnknownRecord): Patient {
   return {
     id: str(value.id),
     publicId: str(value.publicId),
+    nationalId: str(value.nationalId),
     firstName: str(value.firstName),
     lastName: str(value.lastName),
     dateOfBirth: str(value.dateOfBirth),

@@ -12,6 +12,7 @@ export interface RelatedPatientRow {
   patient: {
     id: string;
     publicId: string;
+    nationalId: string;
     firstName: string;
     lastName: string;
   };

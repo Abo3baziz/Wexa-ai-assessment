@@ -29,6 +29,9 @@ export function PatientOverview({
           <span className="font-mono text-sm text-ink-muted">
             {patient.publicId}
           </span>
+          <span className="font-mono text-xs text-ink-muted">
+            NID {patient.nationalId}
+          </span>
         </div>
         <dl className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-muted">
           <div className="flex items-center gap-1.5">

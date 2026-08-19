@@ -58,6 +58,19 @@ function randomPersonName(rng: Rng): PersonName {
   };
 }
 
+/**
+ * Generate a unique 12-digit national ID. Re-picks until the id is not already
+ * in `used`, so IDs are deterministic (via the seeded rng) and unique.
+ */
+function randomNationalId(rng: Rng, used: Set<string>): string {
+  let id: string;
+  do {
+    id = String(randInt(rng, 100000000000, 999999999999));
+  } while (used.has(id));
+  used.add(id);
+  return id;
+}
+
 export const SEED = {
   patients: 30,
   doctors: 15,
@@ -167,7 +180,7 @@ interface Disease { id: string; name: string; category: string }
 interface Medication { id: string; name: string; dosageForm: string }
 interface Doctor { id: string; name: string; specialty: string }
 interface Patient {
-  id: string; publicId: string; firstName: string; lastName: string;
+  id: string; publicId: string; nationalId: string; firstName: string; lastName: string;
   dateOfBirth: string; gender: string;
 }
 interface Visit {
@@ -185,6 +198,7 @@ interface PrescriptionRecord {
 interface CurrentEdge { patientId: string; targetId: string; status: string; since: string }
 
 export function generateDataset(rng: Rng) {
+  const usedNationalIds = new Set<string>();
   const departments: Department[] = Array.from(
     { length: SEED.departments },
     (_, i) => ({
@@ -217,6 +231,7 @@ export function generateDataset(rng: Rng) {
     return {
       id: `pat-${i + 1}`,
       publicId: `P-${String(1001 + i)}`,
+      nationalId: randomNationalId(rng, usedNationalIds),
       firstName,
       lastName,
       dateOfBirth: isoDate(rng, 1945, 2015),
@@ -317,6 +332,7 @@ export function generateDataset(rng: Rng) {
 
 const CONSTRAINTS = [
   "CREATE CONSTRAINT patient_id IF NOT EXISTS FOR (n:Patient) REQUIRE n.id IS UNIQUE",
+  "CREATE CONSTRAINT patient_nationalId IF NOT EXISTS FOR (n:Patient) REQUIRE n.nationalId IS UNIQUE",
   "CREATE CONSTRAINT visit_id IF NOT EXISTS FOR (n:Visit) REQUIRE n.id IS UNIQUE",
   "CREATE CONSTRAINT doctor_id IF NOT EXISTS FOR (n:Doctor) REQUIRE n.id IS UNIQUE",
   "CREATE CONSTRAINT department_id IF NOT EXISTS FOR (n:Department) REQUIRE n.id IS UNIQUE",
@@ -380,7 +396,7 @@ async function main() {
     );
     await run(
       session,
-      "UNWIND $rows AS row MERGE (n:Patient {id: row.id}) SET n.publicId = row.publicId, n.firstName = row.firstName, n.lastName = row.lastName, n.dateOfBirth = row.dateOfBirth, n.gender = row.gender",
+      "UNWIND $rows AS row MERGE (n:Patient {id: row.id}) SET n.publicId = row.publicId, n.nationalId = row.nationalId, n.firstName = row.firstName, n.lastName = row.lastName, n.dateOfBirth = row.dateOfBirth, n.gender = row.gender",
       { rows: data.patients }
     );
 

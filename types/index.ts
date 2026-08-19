@@ -13,6 +13,7 @@ export type Gender = "male" | "female" | "other";
 export interface Patient {
   id: string;
   publicId: string;
+  nationalId: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;

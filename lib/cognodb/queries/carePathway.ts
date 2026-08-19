@@ -10,6 +10,7 @@ export interface CarePathwayRow {
   patient: {
     id: string;
     publicId: string;
+    nationalId: string;
     firstName: string;
     lastName: string;
   };

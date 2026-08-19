@@ -13,9 +13,9 @@ export interface SearchRow {
 
 export const SEARCH_QUERY = `
   CALL {
-    MATCH (p:Patient) WHERE toLower(p.firstName + ' ' + p.lastName) CONTAINS toLower($q)
+    MATCH (p:Patient) WHERE toLower(p.firstName + ' ' + p.lastName) CONTAINS toLower($q) OR toLower(p.nationalId) CONTAINS toLower($q)
     RETURN 'Patient' AS type, p.id AS id, p.firstName + ' ' + p.lastName AS label,
-      p.publicId AS subtitle
+      p.nationalId AS subtitle
     UNION
     MATCH (d:Doctor) WHERE toLower(d.name) CONTAINS toLower($q)
     RETURN 'Doctor' AS type, d.id AS id, d.name AS label, d.specialty AS subtitle
