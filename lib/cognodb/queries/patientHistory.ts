@@ -25,6 +25,10 @@ export interface PatientHistoryRow {
   prescription: Record<string, unknown> | null;
   hasDisease: { status: string; since: string } | null;
   takes: { status: string; since: string } | null;
+  /** The active/resolved Disease reached via HAS_DISEASE, when present. */
+  activeDisease: Record<string, unknown> | null;
+  /** The current Medication reached via TAKES, when present. */
+  activeMedication: Record<string, unknown> | null;
 }
 
 export const PATIENT_HISTORY_QUERY = `
@@ -48,7 +52,9 @@ export const PATIENT_HISTORY_QUERY = `
     med AS medication,
     rx AS prescription,
     hd AS hasDisease,
-    tk AS takes
+    tk AS takes,
+    dActive AS activeDisease,
+    mActive AS activeMedication
 `;
 
 export function findPatientHistory(publicId: string) {

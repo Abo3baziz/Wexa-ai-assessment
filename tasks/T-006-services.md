@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | T-006 |
 | **Priority** | P1 |
-| **Status** | todo |
+| **Status** | done |
 | **Type** | feature |
 | **Branch** | feature/services |
 | **Depends on** | T-005 |
@@ -37,7 +37,11 @@ thin and types stay strict (`no any`).
 - Query definitions, API routes, UI.
 
 ## Acceptance criteria
-- [ ] Mappers are pure (given Records → DTOs), typed, no `any`
-- [ ] Invalid ids/types/depths rejected before DB access
-- [ ] Empty results produce typed empty DTOs, not throws
-- [ ] `npm run typecheck` passes
+- [x] Mappers are pure (given Records → DTOs), typed, no `any` — `services/patient.ts`, `services/graph.ts`, `services/search.ts`, `services/path.ts`, plus shared coercion in `services/record.ts`; `npm run typecheck` is clean.
+- [x] Invalid ids/types/depths rejected before DB access — `services/validate.ts` (`requireEntityId`, `requirePathTargetLabel`, `requireDepth`/`requireOptionalInt`).
+- [x] Empty results produce typed empty DTOs, not throws — `mapPatientOverview`, `mapCarePathway`, `mapPathResult` return empty typed DTOs; `mapSearchResults`/`mapRelatedPatients` return `[]`.
+- [x] `npm run typecheck` passes.
+
+## Notes
+- `patientHistory` query now also returns `dActive`/`mActive` so the current-state
+  HAS_DISEASE/TAKES nodes reach the mapper (health summary needs the node objects).

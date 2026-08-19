@@ -18,7 +18,7 @@ _None._ This is a synthetic-data demonstration app; no P0 items.
 | T-003 | [cognodb-driver](./T-003-cognodb-driver.md) | Server-side driver, config, server-only | done |
 | T-004 | [seed-data](./T-004-seed-data.md) | Seed script with constraints + deterministic data | done |
 | T-005 | [cypher-queries](./T-005-cypher-queries.md) | Parameterized Cypher query layer (Q1–Q5 + search) | done |
-| T-006 | [services](./T-006-services.md) | Service mappers and param validation | todo |
+| T-006 | [services](./T-006-services.md) | Service mappers and param validation | done |
 | T-007 | [api-routes](./T-007-api-routes.md) | API routes, error envelope, health endpoint | todo |
 | T-008 | [core-ui](./T-008-core-ui.md) | Core UI shell, search, overview, states | todo |
 | T-010 | [related-patients](./T-010-related-patients.md) | Related patients panel + click-through | todo |

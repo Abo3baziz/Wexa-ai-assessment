@@ -97,6 +97,28 @@ export interface PatientOverview {
   health: PatientHealthSummary;
 }
 
+/** A single visit in a patient's care pathway, with its doctor/department and
+ * any diagnoses made (and the diseases they were for). */
+export interface PlanDiagnosis {
+  id: string;
+  diagnosedAt: string;
+  severity: string;
+  disease: Disease | null;
+}
+
+export interface CarePathwayEntry {
+  visit: Visit;
+  doctor: Doctor | null;
+  department: Department | null;
+  diagnoses: PlanDiagnosis[];
+  medications: Medication[];
+}
+
+export interface CarePathway {
+  patient: Patient;
+  visits: CarePathwayEntry[];
+}
+
 export interface GraphNode {
   id: string;
   type: NodeType;
