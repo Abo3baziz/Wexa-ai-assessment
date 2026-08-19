@@ -100,7 +100,7 @@ export function GraphSection({ publicId }: { publicId: string }) {
       </div>
 
       {state.kind === "loading" ? (
-        <div className="h-[420px] w-full animate-pulse rounded-xl bg-surface-2" />
+        <div className="h-[60vh] min-h-[360px] w-full animate-pulse rounded-xl bg-surface-2" />
       ) : null}
 
       {state.kind === "error" ? (

@@ -1,37 +1,100 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import {
+  Background,
+  type Edge,
+  Handle,
+  type Node,
+  type NodeProps,
+  Position,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import dagre from "dagre";
 import { useMemo } from "react";
 
-import { NODE_TYPE_COLORS } from "@/lib/graph/colors";
+import { NODE_TYPE_COLORS, NODE_TYPE_LABELS } from "@/lib/graph/colors";
 import type { GraphEdge, GraphNode, NodeType } from "@/types";
 
-const ForceGraph = dynamic(() => import("react-force-graph-2d"), {
-  ssr: false,
-  loading: undefined,
-});
+const NODE_WIDTH = 170;
+const NODE_HEIGHT = 56;
+const RANK_SEP = 90;
+const NODE_SEP = 40;
 
-interface VizNode {
-  id: string;
-  type: NodeType;
+type GraphNodeData = {
   label: string;
+  type: NodeType;
+};
+
+type FlowNode = Node<GraphNodeData, "graph">;
+
+type FlowEdgeData = { type: string };
+
+type FlowEdge = Edge<FlowEdgeData, "default">;
+
+function GraphNodeElement({ data, selected }: NodeProps<FlowNode>) {
+  const color = NODE_TYPE_COLORS[data.type];
+  return (
+    <div
+      className="relative flex items-center gap-2 rounded-xl px-3 py-2 shadow-md"
+      style={{
+        backgroundColor: "#111a30",
+        border: `1.5px solid ${selected ? color : "#2c3a5e"}`,
+        minWidth: NODE_WIDTH,
+      }}
+    >
+      <span
+        className="h-3 w-3 shrink-0 rounded-full"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
+      <div className="min-w-0">
+        <div className="truncate text-sm font-semibold text-ink">
+          {data.label}
+        </div>
+        <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+          {NODE_TYPE_LABELS[data.type]}
+        </div>
+      </div>
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
+    </div>
+  );
 }
 
-interface VizLink {
-  id: string;
-  source: string;
-  target: string;
-  type: string;
+function layout(nodes: FlowNode[], edges: FlowEdge[]): FlowNode[] {
+  const g = new dagre.graphlib.Graph();
+  g.setDefaultEdgeLabel(() => ({}));
+  g.setGraph({ rankdir: "LR", nodesep: NODE_SEP, ranksep: RANK_SEP });
+
+  for (const node of nodes) {
+    g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+  }
+  for (const edge of edges) {
+    g.setEdge(edge.source, edge.target);
+  }
+
+  dagre.layout(g);
+
+  return nodes.map((node) => {
+    const pos = g.node(node.id);
+    return {
+      ...node,
+      position: {
+        x: pos.x - NODE_WIDTH / 2,
+        y: pos.y - NODE_HEIGHT / 2,
+      },
+    };
+  });
 }
 
-interface VizData {
-  nodes: VizNode[];
-  links: VizLink[];
-}
-
-function nodeColor(node: VizNode): string {
-  return NODE_TYPE_COLORS[node.type] ?? "#9aa7c2";
-}
+const edgeLabelStyle = {
+  fill: "#8fa0c8",
+  fontSize: 11,
+  fontWeight: 500,
+};
 
 export function GraphView({
   nodes,
@@ -42,81 +105,55 @@ export function GraphView({
   edges: GraphEdge[];
   onSelectNode: (node: GraphNode) => void;
 }) {
-  const data = useMemo<VizData>(() => {
-    const seen = new Set<string>();
-    const vizNodes: VizNode[] = nodes
-      .filter((n) => {
-        if (seen.has(n.id)) return false;
-        seen.add(n.id);
-        return true;
-      })
-      .map((n) => ({ id: n.id, type: n.type, label: n.label }));
-
-    const linkSeen = new Set<string>();
-    const vizLinks: VizLink[] = edges
-      .filter((e) => {
-        if (linkSeen.has(e.id)) return false;
-        linkSeen.add(e.id);
-        return true;
-      })
-      .map((e) => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        type: e.type,
-      }));
-
-    return { nodes: vizNodes, links: vizLinks };
+  const initial = useMemo(() => {
+    const flowNodes: FlowNode[] = nodes.map((n) => ({
+      id: n.id,
+      type: "graph" as const,
+      data: { label: n.label, type: n.type },
+      position: { x: 0, y: 0 },
+    }));
+    const flowEdges: FlowEdge[] = edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      type: "default" as const,
+      data: { type: e.type },
+      label: e.type,
+      labelStyle: edgeLabelStyle,
+      labelBgStyle: { fill: "#0b1020", fillOpacity: 0.75 },
+      labelBgPadding: [4, 2] as [number, number],
+      labelBgBorderRadius: 4,
+    }));
+    return {
+      nodes: layout(flowNodes, flowEdges),
+      edges: flowEdges,
+    };
   }, [nodes, edges]);
 
-  return (
-    <div className="h-[420px] w-full overflow-hidden rounded-xl border border-border bg-surface">
-      <ForceGraph
-        graphData={data}
-        backgroundColor="rgba(0,0,0,0)"
-        width={undefined}
-        height={420}
-        nodeRelSize={5}
-        linkColor={() => "#2c3a5e"}
-        linkWidth={1.2}
-        linkDirectionalArrowLength={4}
-        linkDirectionalArrowRelPos={0.9}
-        nodeCanvasObject={(node, ctx, globalScale) => {
-          const n = node as unknown as VizNode;
-          const color = nodeColor(n);
-          const radius = 6;
-          ctx.beginPath();
-          ctx.arc(node.x ?? 0, node.y ?? 0, radius, 0, 2 * Math.PI, false);
-          ctx.fillStyle = color;
-          ctx.fill();
-          ctx.strokeStyle = "#0b1020";
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+  const [reactNodes, , onNodesChange] = useNodesState(initial.nodes);
+  const [reactEdges, , onEdgesChange] = useEdgesState(initial.edges);
 
-          const label = n.label;
-          const fontSize = 11 / globalScale;
-          ctx.font = `${fontSize}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-          ctx.fillStyle = "#cfd8ee";
-          ctx.fillText(
-            label.length > 16 ? `${label.slice(0, 16)}…` : label,
-            node.x ?? 0,
-            (node.y ?? 0) + radius + 2
-          );
-        }}
-        nodeCanvasObjectMode={() => "replace"}
-        nodePointerAreaPaint={(node, color, ctx) => {
-          ctx.fillStyle = color;
-          ctx.beginPath();
-          ctx.arc(node.x ?? 0, node.y ?? 0, 9, 0, 2 * Math.PI, false);
-          ctx.fill();
-        }}
-        onNodeClick={(node) => {
-          const hit = nodes.find((n) => n.id === (node as { id: string }).id);
+  return (
+    <div className="h-[60vh] min-h-[360px] w-full overflow-hidden rounded-xl border border-border bg-surface">
+      <ReactFlow
+        nodes={reactNodes}
+        edges={reactEdges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.2}
+        maxZoom={2}
+        onNodeClick={(_, nodeData) => {
+          const hit = nodes.find((n) => n.id === nodeData.id);
           if (hit) onSelectNode(hit);
         }}
-      />
+      >
+        <Background color="#2c3a5e" gap={24} />
+      </ReactFlow>
     </div>
   );
 }
+
+const nodeTypes = { graph: GraphNodeElement };

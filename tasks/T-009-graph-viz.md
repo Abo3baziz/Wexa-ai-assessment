@@ -19,14 +19,16 @@ inspect details, and control expansion.
 
 ## Goal
 
-A client-side relationship graph rendered with react-force-graph-2d that shows
-the selected patient's medical subgraph, color-coded by node type, with
-hover/selected labels, a legend, click-to-inspect details, and controlled
-neighbor expansion — wired to the loading/empty/error states.
+A client-side relationship graph rendered with React Flow (@xyflow/react) that
+shows the selected patient's medical subgraph, color-coded by node type, with
+full node labels, relationship labels on edges, a legend, click-to-inspect
+details, controlled neighbor expansion, and a dagre auto-layout (LR rankdir) so
+nodes do not overlap — wired to the loading/empty/error states.
 
 ## Scope
-- `components/GraphView.tsx` — react-force-graph-2d, dynamically imported with
-  `ssr:false` (client-only canvas), colored nodes by type, link labels, card layout.
+- `components/GraphView.tsx` — React Flow (@xyflow/react) client-only graph with
+  colored nodes by type, full node labels, relationship labels on edges, dagre
+  auto-layout, and card layout.
 - `lib/graph/colors.ts` — node-type color/label maps shared with UI + legend.
 - `components/NodeDetailPanel.tsx` — inspect selected node properties.
 - Controlled expansion: show patient ego subgraph first; expand neighbors on click
@@ -38,7 +40,7 @@ neighbor expansion — wired to the loading/empty/error states.
 - Related-patients panel (T-010), path explorer (T-011).
 
 ## Decisions needed
-- [x] Viz library (**done: react-force-graph-2d, dynamically imported**)
+- [x] Viz library (**done: React Flow / @xyflow/react, client-only**)
 
 ## Acceptance criteria
 - [x] Nodes color-coded by type with legend; links labeled by relationship type
@@ -54,5 +56,6 @@ neighbor expansion — wired to the loading/empty/error states.
       (`GraphSection.tsx` renders a pulse skeleton, `EmptyState` for no graph,
       and an error box with retry via the API error envelope)
 - [x] `ssr:false` and typecheck-clean
-      (`GraphView.tsx` dynamically imports `react-force-graph-2d` with
-      `ssr:false`; `npm run typecheck` and `npm run lint` are green)
+      (`GraphView.tsx` is a `"use client"` component using `@xyflow/react` with
+      `react-dom/client`-rendered canvas — no SSR graph; `npm run typecheck` and
+      `npm run lint` are green)
