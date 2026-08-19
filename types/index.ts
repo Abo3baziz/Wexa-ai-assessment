@@ -139,6 +139,14 @@ export interface GraphPayload {
   edges: GraphEdge[];
 }
 
+/** A non-patient entity (Doctor/Department/Disease/Medication) to explore. */
+export interface EntitySummary {
+  type: Exclude<NodeType, "Patient" | "Visit" | "Diagnosis" | "Prescription">;
+  id: string;
+  label: string;
+  properties: Record<string, string>;
+}
+
 export type RelatedReason = "shared_disease" | "shared_medication" | "shared_doctor";
 
 export interface RelatedPatient {

@@ -2,6 +2,14 @@ import {
   PATH_TARGET_LABELS,
   type PathTargetLabel,
 } from "@/lib/cognodb/queries/pathBetween";
+import {
+  SEARCH_MODES,
+  type SearchMode,
+} from "@/lib/cognodb/queries/search";
+import {
+  ENTITY_GRAPH_LABELS,
+  type EntityGraphLabel,
+} from "@/lib/cognodb/queries/entityGraph";
 
 export class ValidationError extends Error {
   override readonly name = "ValidationError";
@@ -75,4 +83,27 @@ export function requirePathTargetLabel(
     throw new ValidationError("Unsupported path target.");
   }
   return v as PathTargetLabel;
+}
+
+/** Validate a search mode against the allowlist; empty/absent → "all". */
+export function requireSearchMode(
+  value: string | null | undefined
+): SearchMode {
+  const v = (value ?? "").trim();
+  if (v === "") return "all";
+  if (!SEARCH_MODES.includes(v as SearchMode)) {
+    throw new ValidationError("Unsupported search mode.");
+  }
+  return v as SearchMode;
+}
+
+/** Validate an entity graph label against the allowlist used by the query layer. */
+export function requireEntityGraphLabel(
+  value: string | null | undefined
+): EntityGraphLabel {
+  const v = (value ?? "").trim();
+  if (!ENTITY_GRAPH_LABELS.includes(v as EntityGraphLabel)) {
+    throw new ValidationError("Unsupported entity type.");
+  }
+  return v as EntityGraphLabel;
 }

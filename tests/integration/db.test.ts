@@ -4,11 +4,13 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { findCarePathway } from "@/lib/cognodb/queries/carePathway";
 import { findConnectedPatients } from "@/lib/cognodb/queries/connectedPatients";
+import { findEntityGraph } from "@/lib/cognodb/queries/entityGraph";
 import { findPathBetween } from "@/lib/cognodb/queries/pathBetween";
 import { findPatientHistory } from "@/lib/cognodb/queries/patientHistory";
 import { findRelatedPatients } from "@/lib/cognodb/queries/relatedPatients";
 import { searchEntities } from "@/lib/cognodb/queries/search";
 import { getDriver, closeDriver } from "@/lib/cognodb/driver";
+import { buildEntityGraphPayload } from "@/services/entityGraph";
 import {
   mapCarePathway,
   mapPatientOverview,
@@ -108,6 +110,46 @@ gated("CognoDB integration (live instance)", () => {
     const patient = results.find((r) => r.type === "Patient");
     expect(patient).toBeDefined();
     expect(patient?.subtitle).toBe(nationalId);
+  });
+
+  it("national-id mode matches only patients by national ID", async () => {
+    const history = await findPatientHistory("P-1001");
+    const nationalId = history[0]?.patient.nationalId ?? "";
+
+    const rows = await searchEntities(nationalId, 8, "national-id");
+    const results = mapSearchResults(rows);
+    expect(results.length).toBeGreaterThan(0);
+    for (const r of results) {
+      expect(r.type).toBe("Patient");
+    }
+  });
+
+  it("doctor mode returns only doctors", async () => {
+    const rows = await searchEntities("Dr.", 8, "doctor");
+    const results = mapSearchResults(rows);
+    expect(results.length).toBeGreaterThan(0);
+    for (const r of results) {
+      expect(r.type).toBe("Doctor");
+    }
+  });
+
+  it("department mode returns departments", async () => {
+    const rows = await searchEntities("Department of", 8, "department");
+    const results = mapSearchResults(rows);
+    expect(results.length).toBeGreaterThan(0);
+    for (const r of results) {
+      expect(r.type).toBe("Department");
+    }
+  });
+
+  it("builds an entity graph for a doctor", async () => {
+    const search = mapSearchResults(await searchEntities("Dr. ", 8, "doctor"));
+    const doctor = search[0];
+    if (!doctor) return;
+    const rows = await findEntityGraph("Doctor", doctor.id);
+    const payload = buildEntityGraphPayload(rows);
+    expect(payload.nodes.length).toBeGreaterThan(0);
+    expect(payload.nodes.some((n) => n.type === "Patient")).toBe(true);
   });
 
   it("rejects when the database is unreachable", async () => {

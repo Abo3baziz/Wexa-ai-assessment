@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { ConnectionBanner } from "@/components/ConnectionBanner";
+import { EntityGraphSection } from "@/components/EntityGraphSection";
 import { GraphSection } from "@/components/GraphSection";
 import { PatientOverview } from "@/components/PatientOverview";
 import { PatientSearch } from "@/components/PatientSearch";
@@ -11,13 +12,18 @@ import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingState } from "@/components/states/LoadingState";
 import { getApi } from "@/lib/fetchApi";
-import type { PatientOverview as PatientOverviewData, SearchResult } from "@/types";
+import type {
+  EntitySummary,
+  PatientOverview as PatientOverviewData,
+  SearchResult,
+} from "@/types";
 
 type View =
   | { kind: "empty" }
   | { kind: "loading"; publicId: string }
   | { kind: "success"; data: PatientOverviewData }
-  | { kind: "error"; message: string; retry: boolean; publicId: string };
+  | { kind: "error"; message: string; retry: boolean; publicId: string }
+  | { kind: "entity"; summary: EntitySummary };
 
 export default function Home() {
   const [view, setView] = useState<View>({ kind: "empty" });
@@ -30,16 +36,30 @@ export default function Home() {
       );
       setView({ kind: "success", data });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong.";
-      const retry = err instanceof Error && "retry" in err
-        ? Boolean((err as { retry?: boolean }).retry)
-        : false;
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      const retry =
+        err instanceof Error && "retry" in err
+          ? Boolean((err as { retry?: boolean }).retry)
+          : false;
       setView({ kind: "error", message, retry, publicId });
     }
   }, []);
 
   function handleSelect(result: SearchResult) {
-    void loadPatient(result.publicId);
+    if (result.type === "Patient") {
+      void loadPatient(result.publicId);
+    } else {
+      setView({
+        kind: "entity",
+        summary: {
+          type: result.type as EntitySummary["type"],
+          id: result.id,
+          label: result.label,
+          properties: {},
+        },
+      });
+    }
   }
 
   return (
@@ -47,7 +67,10 @@ export default function Home() {
       <header className="sticky top-0 z-10 border-b border-border bg-canvas/90 backdrop-blur">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="flex items-baseline gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-node-patient" aria-hidden="true" />
+            <span
+              className="h-2.5 w-2.5 rounded-full bg-node-patient"
+              aria-hidden="true"
+            />
             <h1 className="text-lg font-semibold tracking-tight text-ink">
               Hospital Graph Explorer
             </h1>
@@ -68,10 +91,33 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        {view.kind === "success" || view.kind === "entity" ? (
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-4 flex items-center gap-1.5 text-sm"
+          >
+            <button
+              type="button"
+              onClick={() => setView({ kind: "empty" })}
+              className="text-ink-muted transition-colors hover:text-ink"
+            >
+              Home
+            </button>
+            <span className="text-ink-muted" aria-hidden="true">
+              ›
+            </span>
+            <span className="text-ink">
+              {view.kind === "success"
+                ? `${view.data.patient.firstName} ${view.data.patient.lastName}`
+                : view.summary.label}
+            </span>
+          </nav>
+        ) : null}
+
         {view.kind === "empty" ? (
           <EmptyState
             title="Select a patient to begin"
-            message="Use the search box above to find a patient by name. Their overview, current conditions, and medications will appear here."
+            message="Use the search box above to find a patient by name or national ID, or explore a doctor, department, disease, or medication."
           />
         ) : null}
 
@@ -94,6 +140,13 @@ export default function Home() {
               onSelect={(publicId) => void loadPatient(publicId)}
             />
           </>
+        ) : null}
+
+        {view.kind === "entity" ? (
+          <EntityGraphSection
+            entity={view.summary}
+            onSelectPatient={(publicId) => void loadPatient(publicId)}
+          />
         ) : null}
       </main>
     </div>

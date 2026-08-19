@@ -31,6 +31,7 @@ _None._ This is a synthetic-data demonstration app; no P0 items.
 | T-009 | [graph-viz](./T-009-graph-viz.md) | Graph visualization + node detail panel | done |
 | T-017 | [seed-american-names](./T-017-seed-american-names.md) | American names with gender-consistent surnames | done |
 | T-018 | [national-id](./T-018-national-id.md) | Patient national ID + search by it | done |
+| T-019 | [search-mode](./T-019-search-mode.md) | Selectable search mode + clickable entity results | done |
 | T-011 | [path-explorer](./T-011-path-explorer.md) | Path explorer (restricted pairs, Q4) | todo |
 | T-012 | [unit-test-mappers](./T-012-unit-test-mappers.md) | Service mapper unit tests + vitest config | todo |
 | T-014 | [readme](./T-014-readme.md) | README: overview, why-graph, mermaid, queries, setup | todo |

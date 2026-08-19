@@ -27,6 +27,35 @@ const TYPE_DOT: Record<NodeType, string> = {
   Prescription: "bg-node-prescription",
 };
 
+type Mode =
+  | "all"
+  | "national-id"
+  | "patient-name"
+  | "doctor"
+  | "medication"
+  | "department"
+  | "disease";
+
+const MODES: ReadonlyArray<{ value: Mode; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "national-id", label: "National ID" },
+  { value: "patient-name", label: "Name + ID" },
+  { value: "doctor", label: "Doctor" },
+  { value: "medication", label: "Medication" },
+  { value: "department", label: "Department" },
+  { value: "disease", label: "Disease" },
+];
+
+const PLACEHOLDER: Record<Mode, string> = {
+  all: "Search a patient, national ID, doctor, disease, medication, or department",
+  "national-id": "Search by national ID",
+  "patient-name": "Search a patient by name or national ID",
+  doctor: "Search a doctor by name",
+  medication: "Search a medication by name",
+  department: "Search a department by name",
+  disease: "Search a disease by name",
+};
+
 export function PatientSearch({
   onSelect,
   selectedPublicId,
@@ -35,6 +64,7 @@ export function PatientSearch({
   selectedPublicId: string | null;
 }) {
   const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<Mode>("all");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<
@@ -46,7 +76,7 @@ export function PatientSearch({
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const runSearch = useCallback(async (q: string) => {
+  const runSearch = useCallback(async (q: string, m: Mode) => {
     const trimmed = q.trim();
     if (!trimmed) {
       setResults([]);
@@ -58,7 +88,7 @@ export function PatientSearch({
     setStatus("loading");
     try {
       const data = await getApi<SearchResult[]>(
-        `/api/search?q=${encodeURIComponent(trimmed)}`
+        `/api/search?q=${encodeURIComponent(trimmed)}&mode=${m}`
       );
       setResults(data);
       setLoadedQuery(trimmed);
@@ -74,10 +104,10 @@ export function PatientSearch({
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
-      void runSearch(query);
+      void runSearch(query, mode);
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [query, runSearch]);
+  }, [query, mode, runSearch]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -97,7 +127,6 @@ export function PatientSearch({
   }, []);
 
   function handleSelect(result: SearchResult) {
-    if (result.type !== "Patient") return;
     onSelect(result);
     setQuery(result.label);
     setOpen(false);
@@ -124,7 +153,7 @@ export function PatientSearch({
   const isEmpty = showResults && results.length === 0;
 
   return (
-    <div ref={rootRef} className="relative w-full max-w-xl">
+    <div ref={rootRef} className="w-full max-w-xl">
       <div className="relative">
         <svg
           className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-muted"
@@ -148,11 +177,9 @@ export function PatientSearch({
           aria-controls="search-results"
           aria-autocomplete="list"
           aria-activedescendant={
-            showResults && results[active]
-              ? `result-${active}`
-              : undefined
+            showResults && results[active] ? `result-${active}` : undefined
           }
-          placeholder="Search a patient, national ID, doctor, disease, or medication"
+          placeholder={PLACEHOLDER[mode]}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -166,6 +193,27 @@ export function PatientSearch({
             {selectedPublicId}
           </span>
         ) : null}
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {MODES.map((m) => {
+          const isActive = m.value === mode;
+          return (
+            <button
+              key={m.value}
+              type="button"
+              onClick={() => setMode(m.value)}
+              aria-pressed={isActive}
+              className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                isActive
+                  ? "border-brand bg-brand text-white"
+                  : "border-border bg-surface text-ink-muted hover:text-ink"
+              }`}
+            >
+              {m.label}
+            </button>
+          );
+        })}
       </div>
 
       {status === "loading" ? (
@@ -197,12 +245,11 @@ export function PatientSearch({
                   <button
                     type="button"
                     id={`result-${index}`}
-                    disabled={!isPatient}
                     onMouseEnter={() => setActive(index)}
                     onClick={() => handleSelect(result)}
                     className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                       isActive ? "bg-brand-soft" : ""
-                    } ${isPatient ? "cursor-pointer" : "cursor-default"}`}
+                    } cursor-pointer`}
                   >
                     <span
                       className={`h-2.5 w-2.5 shrink-0 rounded-full ${TYPE_DOT[result.type]}`}
@@ -221,7 +268,7 @@ export function PatientSearch({
                     </span>
                     {!isPatient ? (
                       <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] text-ink-muted">
-                        not a patient
+                        explore
                       </span>
                     ) : null}
                   </button>
