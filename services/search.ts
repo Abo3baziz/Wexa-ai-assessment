@@ -12,6 +12,7 @@ export function mapSearchResults(rows: SearchRow[]): SearchResult[] {
       id: row.id,
       label: row.label,
       subtitle: row.subtitle,
+      publicId: row.publicId,
     });
     return acc;
   }, []);

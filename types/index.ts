@@ -155,6 +155,8 @@ export interface SearchResult {
   id: string;
   label: string;
   subtitle: string;
+  /** The publicId used to load a patient; empty for non-patient entities. */
+  publicId: string;
 }
 
 export interface PathLink {

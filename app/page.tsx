@@ -39,7 +39,7 @@ export default function Home() {
   }, []);
 
   function handleSelect(result: SearchResult) {
-    void loadPatient(result.subtitle);
+    void loadPatient(result.publicId);
   }
 
   return (
