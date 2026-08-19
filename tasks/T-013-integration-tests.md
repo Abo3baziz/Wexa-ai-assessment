@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | T-013 |
 | **Priority** | P1 |
-| **Status** | todo |
+| **Status** | done |
 | **Type** | test |
 | **Branch** | test/integration |
 | **Depends on** | T-004 |
@@ -37,6 +37,10 @@ invalid ids.
 - [x] Creds availability (**done: user created CognoDB instance; `.env` present**)
 
 ## Acceptance criteria
-- [ ] Integration tests skip cleanly when `COGNODB_URI` unset (CI-safe)
-- [ ] With `.env` set, tests run green against live instance
-- [ ] No credentials hardcoded in tests or committed
+- [x] Integration tests skip cleanly when `COGNODB_URI` unset (CI-safe) — `tests/integration/db.test.ts` uses `describe.skipIf(!COGNODB_URI)`; verified all 9 tests skip with `.env` absent.
+- [x] With `.env` set, tests run green against live instance — `npm run test:integration` → 9/9 passed (connectivity, history, care pathway, related, connected, shortest path, empty history, empty search, DB-unreachable).
+- [x] No credentials hardcoded in tests or committed — config read from env only via `loadCognoDBConfig()`; `.env` is gitignored.
+
+## Notes
+- `vitest.config.ts` aliases `@/*` and stubs `server-only` (to a no-op) so the real query/service/driver modules can run under plain-node vitest.
+- `npm test` is scoped to `tests/services` (offline unit tests) so it never hits the live integration suite; `npm run test:integration` targets `tests/integration`.

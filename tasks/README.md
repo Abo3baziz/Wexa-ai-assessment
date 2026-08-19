@@ -22,7 +22,7 @@ _None._ This is a synthetic-data demonstration app; no P0 items.
 | T-007 | [api-routes](./T-007-api-routes.md) | API routes, error envelope, health endpoint | done |
 | T-008 | [core-ui](./T-008-core-ui.md) | Core UI shell, search, overview, states | done |
 | T-010 | [related-patients](./T-010-related-patients.md) | Related patients panel + click-through | done |
-| T-013 | [integration-tests](./T-013-integration-tests.md) | Integration tests gated on COGNODB_URI | todo |
+| T-013 | [integration-tests](./T-013-integration-tests.md) | Integration tests gated on COGNODB_URI | done |
 | T-015 | [deploy-vercel](./T-015-deploy-vercel.md) | Deploy to Vercel + verify live demo | todo |
 
 ### P2 (quality / DX / polish)

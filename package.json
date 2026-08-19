@@ -10,7 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "seed": "tsx scripts/seed/seed.ts",
-    "test": "vitest run",
+    "test": "vitest run tests/services",
     "test:integration": "vitest run tests/integration"
   },
   "dependencies": {
