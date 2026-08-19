@@ -171,12 +171,29 @@ chore: pin Next.js version and lockfile
 ### Task linkage
 
 This repo uses a sequential `T-XXX` backlog under `tasks/` (files
-`tasks/T-XXX-*.md` + `tasks/README.md` index). When finishing a task, commit
-its work first with the message above, then update the task file: mark
-`Status: done`, tick acceptance criteria `[x]` with evidence, and update the
-status column in `tasks/README.md`. A finished task's `.md` **and the updated
-`tasks/README.md`** both live in the same commit as that task's implementation —
-commit them together so the backlog index always reflects done tasks.
+`tasks/T-XXX-*.md` + `tasks/README.md` index).
+
+**One combined commit per finished task.** Do NOT make a separate "docs" commit
+for the task files. The implementation files AND the updated `tasks/T-XXX-*.md`
+(labelled `done`, criteria ticked `[x]` with evidence) AND the updated status
+column in `tasks/README.md` must all be staged and committed **together in the
+single commit** that delivers the task. Before committing a task, re-read this
+section and the task file.
+
+Workflow when finishing a task `T-XXX`:
+1. Implement on its branch (`feature/|bugfix/|refactor/|chore/|docs/|test/`).
+2. Run `npm run typecheck && npm run lint` (both green).
+3. Update `tasks/T-XXX-*.md`: `Status: done`, tick every criterion `[x]` with
+   evidence; update `tasks/README.md` status column.
+4. `git add` the implementation files **plus** `tasks/T-XXX-*.md` **plus**
+   `tasks/README.md` in one `git add`, then one commit.
+5. Verify `git status` is clean and the commit contains the task files; if the
+   task files landed in their own commit, amend/fix so they are combined (never
+   leave two commits where the second is only task-file housekeeping).
+
+A finished task's `.md` **and** the updated `tasks/README.md` both live in the
+same commit as that task's implementation — never a follow-up commit — so the
+backlog index always reflects done tasks in the same revision as the code.
 
 ### Safety
 
