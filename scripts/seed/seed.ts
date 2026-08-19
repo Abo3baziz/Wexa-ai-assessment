@@ -33,6 +33,31 @@ function isoDate(rng: Rng, fromYear: number, toYear: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+interface PersonName {
+  firstName: string;
+  lastName: string;
+  gender: "male" | "female";
+}
+
+/**
+ * Generate a person's name with a gender-consistent first name and a shared
+ * family (father's) surname. The first name is drawn from the gender-appropriate
+ * pool and therefore determines the gender; the surname comes from the shared
+ * SURNAMES list (the father's family name) for both male and female persons.
+ */
+function randomPersonName(rng: Rng): PersonName {
+  const gender = pick(rng, ["male", "female"] as const);
+  const firstName =
+    gender === "male"
+      ? pick(rng, MALE_FIRST_NAMES)
+      : pick(rng, FEMALE_FIRST_NAMES);
+  return {
+    firstName,
+    lastName: pick(rng, SURNAMES),
+    gender,
+  };
+}
+
 export const SEED = {
   patients: 30,
   doctors: 15,
@@ -43,16 +68,27 @@ export const SEED = {
   maxVisits: 5,
 };
 
-const FIRST_NAMES = [
-  "Ahmed", "Sara", "Omar", "Layla", "Hassan", "Mariam", "Yusuf", "Noor",
-  "Tariq", "Zainab", "Karim", "Huda", "Bilal", "Amina", "Rami", "Dina",
-  "Sami", "Lina", "Fadi", "Reem", "Nabil", "Salma", "Khalid", "Mona",
-  "Hadi", "Yara", "Majd", "Rana", "Ziad", "Nadia",
+const MALE_FIRST_NAMES = [
+  "James", "John", "Robert", "Michael", "David", "William", "Richard", "Joseph",
+  "Thomas", "Charles", "Christopher", "Daniel", "Matthew", "Anthony", "Mark",
+  "Donald", "Steven", "Paul", "Andrew", "Joshua", "Kenneth", "Kevin", "Brian",
+  "George", "Timothy", "Ronald", "Edward", "Jason", "Jeffrey", "Ryan",
 ];
 
-const LAST_NAMES = [
-  "Hassan", "Ali", "Khan", "Hussein", "Farah", "Nasser", "Khalil", "Saleh",
-  "Aziz", "Haddad", "Mansour", "Salem", "Othman", "Barakat", "Jaber",
+const FEMALE_FIRST_NAMES = [
+  "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan",
+  "Jessica", "Sarah", "Karen", "Lisa", "Nancy", "Betty", "Margaret", "Sandra",
+  "Ashley", "Kimberly", "Emily", "Donna", "Michelle", "Carol", "Amanda",
+  "Dorothy", "Melissa", "Deborah", "Stephanie", "Rebecca", "Sharon", "Laura",
+  "Cynthia",
+];
+
+const SURNAMES = [
+  "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+  "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson",
+  "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee",
+  "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez",
+  "Lewis", "Robinson",
 ];
 
 const DISEASES: ReadonlyArray<{ name: string; category: string }> = [
@@ -167,20 +203,26 @@ export function generateDataset(rng: Rng) {
     ...m,
   }));
 
-  const doctors: Doctor[] = Array.from({ length: SEED.doctors }, (_, i) => ({
-    id: `doc-${i + 1}`,
-    name: `Dr. ${pick(rng, FIRST_NAMES)} ${pick(rng, LAST_NAMES)}`,
-    specialty: pick(rng, SPECIALTIES),
-  }));
+  const doctors: Doctor[] = Array.from({ length: SEED.doctors }, (_, i) => {
+    const { firstName, lastName } = randomPersonName(rng);
+    return {
+      id: `doc-${i + 1}`,
+      name: `Dr. ${firstName} ${lastName}`,
+      specialty: pick(rng, SPECIALTIES),
+    };
+  });
 
-  const patients: Patient[] = Array.from({ length: SEED.patients }, (_, i) => ({
-    id: `pat-${i + 1}`,
-    publicId: `P-${String(1001 + i)}`,
-    firstName: pick(rng, FIRST_NAMES),
-    lastName: pick(rng, LAST_NAMES),
-    dateOfBirth: isoDate(rng, 1945, 2015),
-    gender: pick(rng, ["male", "female", "female", "male"] as const),
-  }));
+  const patients: Patient[] = Array.from({ length: SEED.patients }, (_, i) => {
+    const { firstName, lastName, gender } = randomPersonName(rng);
+    return {
+      id: `pat-${i + 1}`,
+      publicId: `P-${String(1001 + i)}`,
+      firstName,
+      lastName,
+      dateOfBirth: isoDate(rng, 1945, 2015),
+      gender,
+    };
+  });
 
   const visits: Visit[] = [];
   const diagnoses: DiagnosisRecord[] = [];
