@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { ConnectionBanner } from "@/components/ConnectionBanner";
+import { GraphSection } from "@/components/GraphSection";
 import { PatientOverview } from "@/components/PatientOverview";
 import { PatientSearch } from "@/components/PatientSearch";
 import { RelatedPatients } from "@/components/RelatedPatients";
@@ -87,6 +88,7 @@ export default function Home() {
         {view.kind === "success" ? (
           <>
             <PatientOverview overview={view.data} />
+            <GraphSection publicId={view.data.patient.publicId} />
             <RelatedPatients
               publicId={view.data.patient.publicId}
               onSelect={(publicId) => void loadPatient(publicId)}

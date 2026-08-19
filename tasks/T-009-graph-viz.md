@@ -4,7 +4,7 @@
 |-------|-------|
 | **ID** | T-009 |
 | **Priority** | P2 |
-| **Status** | todo |
+| **Status** | done |
 | **Type** | feature |
 | **Branch** | feature/graph-viz |
 | **Depends on** | T-008 |
@@ -41,8 +41,18 @@ neighbor expansion — wired to the loading/empty/error states.
 - [x] Viz library (**done: react-force-graph-2d, dynamically imported**)
 
 ## Acceptance criteria
-- [ ] Nodes color-coded by type with legend; links labeled by relationship type
-- [ ] Click node → detail panel shows properties
-- [ ] Expansion is controlled (no unreadable full-graph dump)
-- [ ] Handles loading/empty/error states
-- [ ] `ssr:false` and typecheck-clean
+- [x] Nodes color-coded by type with legend; links labeled by relationship type
+      (`lib/graph/colors.ts` maps `NodeType` → color/label; `GraphView.tsx` fills
+      each node by type; `GraphSection.tsx` renders a legend of present types)
+- [x] Click node → detail panel shows properties
+      (`GraphSection.tsx` `handleNodeClick` sets selection →
+      `NodeDetailPanel.tsx` lists non-hidden node properties)
+- [x] Expansion is controlled (no unreadable full-graph dump)
+      (`GraphSection.tsx` reveals the patient ego-subgraph first and expands a
+      clicked node's immediate neighbors only)
+- [x] Handles loading/empty/error states
+      (`GraphSection.tsx` renders a pulse skeleton, `EmptyState` for no graph,
+      and an error box with retry via the API error envelope)
+- [x] `ssr:false` and typecheck-clean
+      (`GraphView.tsx` dynamically imports `react-force-graph-2d` with
+      `ssr:false`; `npm run typecheck` and `npm run lint` are green)
