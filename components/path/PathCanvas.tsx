@@ -1,9 +1,14 @@
 "use client";
 
-import { Background, ReactFlow } from "@xyflow/react";
+import {
+  Background,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { Core } from "cytoscape";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { flowNodeTypes, type FlowNode } from "@/components/graph/flow/FlowNode";
 import {
@@ -12,14 +17,15 @@ import {
   EMPTY_SELECTION,
   type FlowEdge,
 } from "@/components/graph/flow/flowElements";
+import { edgeTypes } from "@/components/graph/flow/LabeledEdge";
 import {
-  computePathLayout,
   createGraph,
   cyIdOf,
   payloadToElements,
   runPathLayout,
 } from "@/lib/graph/cytoscape";
 import type { GraphEngine } from "@/lib/graph/engine";
+import { computeElkTreeLayout } from "@/lib/graph/elk";
 import type { GraphEdge, GraphNode } from "@/types";
 
 interface PathSpineProps {
@@ -76,36 +82,54 @@ export function PathCanvasCytoscape({ nodes, edges, startId }: PathSpineProps) {
 }
 
 /**
- * Read-only React Flow variant of the path spine. Reuses the headless
- * breadthfirst layout so both engines render the same horizontal chain.
+ * Read-only React Flow variant of the path spine. Uses the ElkJS layered
+ * layout (direction RIGHT) so the chain renders as a clean horizontal spine.
  */
-function PathCanvasFlow({ nodes, edges, startId }: PathSpineProps) {
-  const { flowNodes, flowEdges } = useMemo(() => {
-    const positions = computePathLayout(nodes, edges).positions;
-    return {
-      flowNodes: buildFlowNodes(nodes, positions, startId, EMPTY_SELECTION),
-      flowEdges: buildFlowEdges(nodes, edges, EMPTY_SELECTION),
-    };
-  }, [nodes, edges, startId]);
+function PathFlowInner({ nodes, edges, startId }: PathSpineProps) {
+  const { fitView } = useReactFlow();
+  const [flowNodes, setFlowNodes] = useState<FlowNode[]>([]);
+  const [flowEdges, setFlowEdges] = useState<FlowEdge[]>([]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void computeElkTreeLayout(nodes, edges, startId, "RIGHT").then((layout) => {
+      if (cancelled) return;
+      setFlowNodes(
+        buildFlowNodes(nodes, layout.positions, startId, EMPTY_SELECTION, "horizontal")
+      );
+      setFlowEdges(buildFlowEdges(nodes, edges, EMPTY_SELECTION));
+      requestAnimationFrame(() => fitView({ padding: 0.2, duration: 400 }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [nodes, edges, startId, fitView]);
+
+  return (
+    <ReactFlow<FlowNode, FlowEdge>
+      nodes={flowNodes}
+      edges={flowEdges}
+      nodeTypes={flowNodeTypes}
+      edgeTypes={edgeTypes}
+      minZoom={0.15}
+      maxZoom={4}
+      elementsSelectable={false}
+    >
+      <Background color="#2c3a5e" gap={24} />
+    </ReactFlow>
+  );
+}
+
+function PathCanvasFlow(props: PathSpineProps) {
   return (
     <div
       role="img"
       aria-label="Shortest path between the selected patient and target"
       className="h-72 w-full select-none overflow-hidden rounded-xl border border-border bg-canvas"
     >
-      <ReactFlow<FlowNode, FlowEdge>
-        nodes={flowNodes}
-        edges={flowEdges}
-        nodeTypes={flowNodeTypes}
-        minZoom={0.15}
-        maxZoom={4}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        elementsSelectable={false}
-      >
-        <Background color="#2c3a5e" gap={24} />
-      </ReactFlow>
+      <ReactFlowProvider>
+        <PathFlowInner {...props} />
+      </ReactFlowProvider>
     </div>
   );
 }

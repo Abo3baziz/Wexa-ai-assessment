@@ -4,6 +4,7 @@ import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { useState } from "react";
 
 import { NODE_TYPE_COLORS } from "@/lib/graph/colors";
+import type { EdgeOrientation } from "@/lib/graph/elk";
 import type { NodeType } from "@/types";
 
 export interface FlowNodeData {
@@ -14,6 +15,8 @@ export interface FlowNodeData {
   isRoot: boolean;
   selected: boolean;
   dimmed: boolean;
+  /** Where edges attach: vertical = top/bottom, horizontal = left/right. */
+  edgeOrientation: EdgeOrientation;
   [key: string]: unknown;
 }
 
@@ -88,6 +91,10 @@ export function GraphFlowNode({ data, selected }: NodeProps<FlowNode>) {
   const stroke = selected || data.isRoot || hovered ? "#ffffff" : DEFAULT_STROKE;
   const strokeWidth = selected ? 3 : data.isRoot ? 2.5 : hovered ? 2.5 : 1.5;
   const strokeOpacity = selected ? 1 : data.isRoot ? 0.9 : hovered ? 0.4 : 0.75;
+  const sourceHandle =
+    data.edgeOrientation === "horizontal" ? Position.Right : Position.Bottom;
+  const targetHandle =
+    data.edgeOrientation === "horizontal" ? Position.Left : Position.Top;
 
   return (
     <div
@@ -95,8 +102,8 @@ export function GraphFlowNode({ data, selected }: NodeProps<FlowNode>) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <Handle type="source" position={Position.Right} className="!opacity-0" />
-      <Handle type="target" position={Position.Left} className="!opacity-0" />
+      <Handle type="source" position={sourceHandle} className="!opacity-0" />
+      <Handle type="target" position={targetHandle} className="!opacity-0" />
       <svg
         width={shape.size}
         height={shape.size}

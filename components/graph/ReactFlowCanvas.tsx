@@ -22,12 +22,17 @@ import { flowNodeTypes, type FlowNode } from "@/components/graph/flow/FlowNode";
 import {
   buildFlowEdges,
   buildFlowNodes,
-  LAYOUT_SCALE,
   selectionInfo,
   type FlowEdge,
 } from "@/components/graph/flow/flowElements";
-import { computeForceLayout, cyIdOf } from "@/lib/graph/cytoscape";
-import type { LayoutResult } from "@/lib/graph/cytoscape";
+import { edgeTypes, type LabeledEdgeData } from "@/components/graph/flow/LabeledEdge";
+import { cyIdOf } from "@/lib/graph/cytoscape";
+import {
+  computeElkTreeLayout,
+  ELK_NODE_HEIGHT,
+  ELK_NODE_WIDTH,
+  type ElkLayoutResult,
+} from "@/lib/graph/elk";
 import type { GraphEdge, GraphNode } from "@/types";
 
 interface ReactFlowCanvasProps {
@@ -56,9 +61,10 @@ function edgeStyleFor(
 }
 
 /**
- * React Flow renderer with feature parity to GraphCanvas: it reuses the exact
- * cytoscape force layout (run headless) so both engines look the same, and it
- * exposes the same imperative GraphCanvasHandle (zoom/fit/reset/center).
+ * React Flow renderer with feature parity to GraphCanvas: it lays out with
+ * ElkJS (layered tree, growing down from the root) and draws every edge with
+ * an always-readable relationship label. Exposes the same imperative
+ * GraphCanvasHandle (zoom/fit/reset/center).
  */
 const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>(
   function ReactFlowCanvasInner(
@@ -72,7 +78,7 @@ const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
 
-  const layoutRef = useRef<LayoutResult | null>(null);
+  const layoutRef = useRef<ElkLayoutResult | null>(null);
   const rootPosRef = useRef<{ x: number; y: number } | null>(null);
   const propsRef = useRef({ nodes, edges, rootNodeId, selectedNodeId });
   propsRef.current = { nodes, edges, rootNodeId, selectedNodeId };
@@ -80,18 +86,22 @@ const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>
   nodeByPayloadId.current = new Map(nodes.map((n) => [n.id, n]));
 
   const applyLayout = useCallback(
-    (nodesArg: GraphNode[], edgesArg: GraphEdge[], rootId: string, fit: boolean) => {
-      const layout = computeForceLayout(nodesArg, edgesArg);
+    async (nodesArg: GraphNode[], edgesArg: GraphEdge[], rootId: string, fit: boolean) => {
+      const layout = await computeElkTreeLayout(nodesArg, edgesArg, rootId, "DOWN");
       layoutRef.current = layout;
       const rootNode = nodesArg.find((n) => n.id === rootId);
       rootPosRef.current = rootNode
         ? (() => {
             const p = layout.positions.get(cyIdOf(rootNode));
-            return p ? { x: p.x * LAYOUT_SCALE, y: p.y * LAYOUT_SCALE } : null;
+            return p
+              ? { x: p.x + ELK_NODE_WIDTH / 2, y: p.y + ELK_NODE_HEIGHT / 2 }
+              : null;
           })()
         : null;
       const selection = selectionInfo(nodesArg, edgesArg, propsRef.current.selectedNodeId);
-      setFlowNodes(buildFlowNodes(nodesArg, layout.positions, rootId, selection));
+      setFlowNodes(
+        buildFlowNodes(nodesArg, layout.positions, rootId, selection, "vertical")
+      );
       setFlowEdges(buildFlowEdges(nodesArg, edgesArg, selection));
       if (fit) {
         requestAnimationFrame(() =>
@@ -103,7 +113,7 @@ const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>
   );
 
   useEffect(() => {
-    applyLayout(nodes, edges, rootNodeId, true);
+    void applyLayout(nodes, edges, rootNodeId, true);
   }, [nodes, edges, rootNodeId, applyLayout]);
 
   useEffect(() => {
@@ -121,6 +131,7 @@ const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>
     setFlowEdges((prev) =>
       prev.map((e) => ({
         ...e,
+        data: { ...e.data, dimmed: selection.dimmedEdgeIds.has(e.id) } as LabeledEdgeData,
         style: edgeStyleFor(e, selection.highlightedEdgeIds, selection.dimmedEdgeIds),
       }))
     );
@@ -134,7 +145,7 @@ const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>
       fit: () => rfRef.current.fitView({ padding: 0.15, duration: 400 }),
       resetLayout: () => {
         const { nodes: n, edges: e, rootNodeId: r } = propsRef.current;
-        applyLayout(n, e, r, true);
+        void applyLayout(n, e, r, true);
       },
       centerOnRoot: () => {
         const pos = rootPosRef.current;
@@ -160,6 +171,7 @@ const ReactFlowCanvasInner = forwardRef<GraphCanvasHandle, ReactFlowCanvasProps>
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={flowNodeTypes}
+        edgeTypes={edgeTypes}
         minZoom={0.15}
         maxZoom={4}
         fitView
