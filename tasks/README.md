@@ -35,7 +35,7 @@ _None._ This is a synthetic-data demonstration app; no P0 items.
 | T-020 | [cytoscape-graph-explorer](./T-020-cytoscape-graph-explorer.md) | Obsidian-style graph explorer on Cytoscape.js (replaces T-009) | done |
 | T-011 | [path-explorer](./T-011-path-explorer.md) | Path explorer (restricted pairs, Q4) | done |
 | T-012 | [unit-test-mappers](./T-012-unit-test-mappers.md) | Service mapper unit tests + vitest config | done |
-| T-014 | [readme](./T-014-readme.md) | README: overview, why-graph, mermaid, queries, setup | todo |
+| T-014 | [readme](./T-014-readme.md) | README: overview, why-graph, mermaid, queries, setup | done |
 | T-016 | [final-cleanup](./T-016-final-cleanup.md) | Screenshots, screen recording, repo cleanup | todo |
 
 ### P3 (future / product)
