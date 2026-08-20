@@ -207,7 +207,7 @@ npm run test:integration  # live-DB tests, requires COGNODB_URI
 ## Demo
 
 - **Live demo**: _pending deployment (Vercel)_
-- **Video walkthrough**: <video src="screenshots/video.mp4" controls width="640"></video>
+- **Video walkthrough**: [Watch the demo walkthrough](screenshots/video.mp4)
 
 ### Screenshots
 
