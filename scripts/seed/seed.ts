@@ -393,8 +393,14 @@ async function main() {
 
   try {
     // Deterministic seed: clear any prior data so re-runs are identical.
+    // Runs against the configured (cloud) CognoDB; logs the wiped count so a
+    // fresh start is verifiable.
     console.log("Clearing existing graph...");
-    await run(session, "MATCH (n) DETACH DELETE n", {});
+    const clearResult = await session.run("MATCH (n) DETACH DELETE n", {});
+    console.log(
+      `Deleted ${clearResult.summary.counters.updates().nodesDeleted} nodes` +
+        ` from ${config.database}`
+    );
 
     console.log("Creating constraints/indexes...");
     for (const c of CONSTRAINTS) {
