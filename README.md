@@ -206,7 +206,7 @@ npm run test:integration  # live-DB tests, requires COGNODB_URI
 
 ## Demo
 
-- **Live demo**: _pending deployment (Vercel)_
+- **Live demo**: [Open Demo](https://wexa-ai-assessment-psi.vercel.app/)
 - **Video walkthrough**: [Watch the demo walkthrough](screenshots/video.mp4)
 
 ### Screenshots
