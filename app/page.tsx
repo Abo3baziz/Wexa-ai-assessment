@@ -3,8 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { ConnectionBanner } from "@/components/ConnectionBanner";
-import { EntityGraphSection } from "@/components/EntityGraphSection";
-import { GraphSection } from "@/components/GraphSection";
+import { GraphExplorer } from "@/components/graph/GraphExplorer";
 import { PatientOverview } from "@/components/PatientOverview";
 import { PatientSearch } from "@/components/PatientSearch";
 import { RelatedPatients } from "@/components/RelatedPatients";
@@ -23,6 +22,7 @@ type View =
   | { kind: "loading"; publicId: string }
   | { kind: "success"; data: PatientOverviewData }
   | { kind: "error"; message: string; retry: boolean; publicId: string }
+  | { kind: "graph"; publicId: string }
   | { kind: "entity"; summary: EntitySummary };
 
 export default function Home() {
@@ -91,7 +91,7 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        {view.kind === "success" || view.kind === "entity" ? (
+        {view.kind === "success" || view.kind === "entity" || view.kind === "graph" ? (
           <nav
             aria-label="Breadcrumb"
             className="mb-4 flex items-center gap-1.5 text-sm"
@@ -106,11 +106,27 @@ export default function Home() {
             <span className="text-ink-muted" aria-hidden="true">
               ›
             </span>
-            <span className="text-ink">
-              {view.kind === "success"
-                ? `${view.data.patient.firstName} ${view.data.patient.lastName}`
-                : view.summary.label}
-            </span>
+            {view.kind === "graph" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void loadPatient(view.publicId)}
+                  className="text-ink-muted transition-colors hover:text-ink"
+                >
+                  Patient
+                </button>
+                <span className="text-ink-muted" aria-hidden="true">
+                  ›
+                </span>
+                <span className="text-ink">Graph Explorer</span>
+              </>
+            ) : (
+              <span className="text-ink">
+                {view.kind === "success"
+                  ? `${view.data.patient.firstName} ${view.data.patient.lastName}`
+                  : view.summary.label}
+              </span>
+            )}
           </nav>
         ) : null}
 
@@ -133,8 +149,12 @@ export default function Home() {
 
         {view.kind === "success" ? (
           <>
-            <PatientOverview overview={view.data} />
-            <GraphSection publicId={view.data.patient.publicId} />
+            <PatientOverview
+              overview={view.data}
+              onExploreGraph={() =>
+                setView({ kind: "graph", publicId: view.data.patient.publicId })
+              }
+            />
             <RelatedPatients
               publicId={view.data.patient.publicId}
               onSelect={(publicId) => void loadPatient(publicId)}
@@ -142,9 +162,16 @@ export default function Home() {
           </>
         ) : null}
 
+        {view.kind === "graph" ? (
+          <GraphExplorer
+            root={{ kind: "patient", publicId: view.publicId }}
+            onSelectPatient={(publicId) => void loadPatient(publicId)}
+          />
+        ) : null}
+
         {view.kind === "entity" ? (
-          <EntityGraphSection
-            entity={view.summary}
+          <GraphExplorer
+            root={{ kind: "entity", summary: view.summary }}
             onSelectPatient={(publicId) => void loadPatient(publicId)}
           />
         ) : null}

@@ -8,6 +8,20 @@ export type NodeType =
   | "Diagnosis"
   | "Prescription";
 
+export const GRAPH_DEPTHS = [1, 2, 3] as const;
+export type GraphDepth = (typeof GRAPH_DEPTHS)[number];
+
+export type RelationshipType =
+  | "HAD_VISIT"
+  | "TREATED_BY"
+  | "WORKS_IN"
+  | "RESULTED_IN"
+  | "FOR_DISEASE"
+  | "GENERATED"
+  | "FOR_MEDICATION"
+  | "HAS_DISEASE"
+  | "TAKES";
+
 export type Gender = "male" | "female" | "other";
 
 export interface Patient {
@@ -131,12 +145,26 @@ export interface GraphEdge {
   id: string;
   source: string;
   target: string;
-  type: string;
+  type: RelationshipType;
 }
 
 export interface GraphPayload {
   nodes: GraphNode[];
   edges: GraphEdge[];
+}
+
+/** Per-type visibility toggle for the graph explorer (all on by default). */
+export type GraphFilters = Record<NodeType, boolean>;
+
+/** The node currently inspected in the graph explorer. */
+export interface SelectedNode {
+  node: GraphNode;
+  /** True when this is the root patient/entity the graph is centered on. */
+  isRoot: boolean;
+  /** Ids of directly connected nodes (from the loaded payload). */
+  neighbors: string[];
+  /** Why a discovered patient is related, when known (non-root patients). */
+  related: RelatedPatient | null;
 }
 
 /** A non-patient entity (Doctor/Department/Disease/Medication) to explore. */

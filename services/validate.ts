@@ -10,6 +10,11 @@ import {
   ENTITY_GRAPH_LABELS,
   type EntityGraphLabel,
 } from "@/lib/cognodb/queries/entityGraph";
+import {
+  NODE_GRAPH_LABELS,
+  type NodeGraphLabel,
+} from "@/lib/cognodb/queries/nodeGraph";
+import { GRAPH_DEPTHS, type GraphDepth } from "@/types";
 
 export class ValidationError extends Error {
   override readonly name = "ValidationError";
@@ -106,4 +111,32 @@ export function requireEntityGraphLabel(
     throw new ValidationError("Unsupported entity type.");
   }
   return v as EntityGraphLabel;
+}
+
+/** Validate a node label for the expand-node query against the allowlist. */
+export function requireNodeGraphLabel(
+  value: string | null | undefined
+): NodeGraphLabel {
+  const v = (value ?? "").trim();
+  if (!NODE_GRAPH_LABELS.includes(v as NodeGraphLabel)) {
+    throw new ValidationError("Unsupported node type.");
+  }
+  return v as NodeGraphLabel;
+}
+
+/**
+ * Validate graph traversal depth against the allowlist (1|2|3); empty →
+ * default 2. The allowlist is what makes the fixed-depth Cypher queries safe:
+ * the depth never reaches the query layer as user input.
+ */
+export function requireGraphDepth(
+  value: string | null | undefined
+): GraphDepth {
+  const v = (value ?? "").trim();
+  if (v === "") return 2;
+  const n = Number(v);
+  if (!GRAPH_DEPTHS.includes(n as GraphDepth)) {
+    throw new ValidationError("Invalid graph depth.");
+  }
+  return n as GraphDepth;
 }

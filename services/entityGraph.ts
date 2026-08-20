@@ -3,10 +3,26 @@ import type {
   EntityGraphRow,
 } from "@/lib/cognodb/queries/entityGraph";
 import { ENTITY_GRAPH_LABELS } from "@/lib/cognodb/queries/entityGraph";
-import type { GraphEdge, GraphNode, GraphPayload } from "@/types";
+import type { GraphEdge, GraphNode, GraphPayload, RelationshipType } from "@/types";
 import { typeFromLabel } from "./record";
 
 type UnknownRecord = Record<string, unknown>;
+
+const RELATIONSHIP_TYPES: ReadonlySet<string> = new Set([
+  "HAD_VISIT",
+  "TREATED_BY",
+  "WORKS_IN",
+  "RESULTED_IN",
+  "FOR_DISEASE",
+  "GENERATED",
+  "FOR_MEDICATION",
+  "HAS_DISEASE",
+  "TAKES",
+]);
+
+function relationshipTypeOf(value: string): RelationshipType | null {
+  return RELATIONSHIP_TYPES.has(value) ? (value as RelationshipType) : null;
+}
 
 function nodeId(value: UnknownRecord): string {
   return typeof value.id === "string" ? value.id : "";
@@ -20,7 +36,15 @@ function propsOf(value: UnknownRecord): Record<string, string> {
   return out;
 }
 
-function labelOf(value: UnknownRecord): string {
+function labelOf(value: UnknownRecord, type: string): string {
+  if (type === "Patient") {
+    const first = typeof value.firstName === "string" ? value.firstName : "";
+    const last = typeof value.lastName === "string" ? value.lastName : "";
+    if (first || last) return `${first} ${last}`.trim();
+  }
+  if (type === "Visit" && typeof value.visitDate === "string") {
+    return value.visitDate;
+  }
   if (typeof value.name === "string") return value.name;
   if (typeof value.publicId === "string") return value.publicId;
   if (typeof value.id === "string") return value.id;
@@ -43,7 +67,7 @@ export function buildEntityGraphPayload(rows: EntityGraphRow[]): GraphPayload {
       nodes.set(key, {
         id,
         type: nodeType,
-        label: labelOf(record),
+        label: labelOf(record, type),
         properties: propsOf(record),
       });
     }
@@ -58,13 +82,15 @@ export function buildEntityGraphPayload(rows: EntityGraphRow[]): GraphPayload {
     addNode(row.sourceProps, row.sourceType, row.sourceId);
     addNode(row.targetProps, row.targetType, row.targetId);
     if (!row.sourceId || !row.targetId) continue;
-    const ek = `${row.sourceId}->${row.targetId}::${row.relType}`;
+    const relType = relationshipTypeOf(row.relType);
+    if (!relType) continue;
+    const ek = `${row.sourceId}->${row.targetId}::${relType}`;
     if (!edges.has(ek)) {
       edges.set(ek, {
         id: ek,
         source: row.sourceId,
         target: row.targetId,
-        type: row.relType,
+        type: relType,
       });
     }
   }
@@ -88,7 +114,7 @@ export function buildEntitySummary(rows: EntityGraphRow[]): EntitySummary | null
   return {
     type: type as EntityGraphLabel,
     id: nodeId(root),
-    label: labelOf(root),
+    label: labelOf(root, type),
     properties: propsOf(root),
   };
 }

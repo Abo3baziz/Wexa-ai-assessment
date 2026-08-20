@@ -14,24 +14,39 @@ function formatDate(value: string): string {
 
 export function PatientOverview({
   overview,
+  onExploreGraph,
 }: {
   overview: PatientOverview;
+  onExploreGraph: () => void;
 }) {
   const { patient, stats, health } = overview;
 
   return (
     <section className="animate-fade-in" aria-label="Patient overview">
       <header className="mb-5">
-        <div className="flex items-baseline gap-2">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">
-            {patient.firstName} {patient.lastName}
-          </h2>
-          <span className="font-mono text-sm text-ink-muted">
-            {patient.publicId}
-          </span>
-          <span className="font-mono text-xs text-ink-muted">
-            NID {patient.nationalId}
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight text-ink">
+              {patient.firstName} {patient.lastName}
+            </h2>
+            <span className="font-mono text-sm text-ink-muted">
+              {patient.publicId}
+            </span>
+            <span className="font-mono text-xs text-ink-muted">
+              NID {patient.nationalId}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onExploreGraph}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white shadow-card transition-colors hover:bg-brand/90"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path strokeLinecap="round" d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.5 2.5M16.5 16.5 19 19M19 5l-2.5 2.5M7.5 16.5 5 19" />
+            </svg>
+            Explore Graph
+          </button>
         </div>
         <dl className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-muted">
           <div className="flex items-center gap-1.5">
