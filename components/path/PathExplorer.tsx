@@ -106,14 +106,14 @@ export function PathExplorer({ library }: { library: GraphEngine }) {
             →
           </span>
           <div className="min-w-0 flex-1">
-            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-muted">
-              To
-            </span>
-            <div className="flex gap-2">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                To
+              </span>
               <div
                 role="group"
                 aria-label="Target type"
-                className="flex shrink-0 overflow-hidden rounded-lg border border-border"
+                className="flex overflow-hidden rounded-lg border border-border"
               >
                 {TARGET_TYPES.map((t) => (
                   <button
@@ -134,14 +134,14 @@ export function PathExplorer({ library }: { library: GraphEngine }) {
                   </button>
                 ))}
               </div>
-              <EntityPicker
-                label=""
-                placeholder={`Search a ${targetType.toLowerCase()}`}
-                mode={TARGET_MODE[targetType]}
-                value={to}
-                onSelect={setTo}
-              />
             </div>
+            <EntityPicker
+              label=""
+              placeholder={`Search a ${targetType.toLowerCase()}`}
+              mode={TARGET_MODE[targetType]}
+              value={to}
+              onSelect={setTo}
+            />
           </div>
         </div>
 
