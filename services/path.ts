@@ -43,9 +43,8 @@ export function mapPathResult(rows: PathStepRow[]): PathResult {
     });
   }
 
-  const knownTypes = nodes.every((n) => {
-    const type = typeFromLabel(routeLabel(n.label));
-    return type !== null;
+  const knownTypes = row.nodes.every((n) => {
+    return typeFromLabel(routeLabel(n.label)) !== undefined;
   });
 
   const valid = nodes.every((n) => n.id !== "") && knownTypes;
