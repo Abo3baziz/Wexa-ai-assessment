@@ -7,7 +7,9 @@ import { GraphControls } from "@/components/graph/GraphControls";
 import { GraphDetailsPanel } from "@/components/graph/GraphDetailsPanel";
 import { GraphFilters } from "@/components/graph/GraphFilters";
 import { GraphLegend } from "@/components/graph/GraphLegend";
+import { ReactFlowCanvas } from "@/components/graph/ReactFlowCanvas";
 import { getApi } from "@/lib/fetchApi";
+import type { GraphEngine } from "@/lib/graph/engine";
 import {
   applyTypeFilters,
   mergePayloads,
@@ -37,6 +39,7 @@ type State =
 interface GraphExplorerProps {
   root: ExplorerRoot;
   onSelectPatient: (publicId: string) => void;
+  library: GraphEngine;
 }
 
 const ALL_TYPES_ON: GraphFiltersState = {
@@ -65,7 +68,7 @@ function rootNodeOf(payload: GraphPayload, root: ExplorerRoot): GraphNode | null
   );
 }
 
-export function GraphExplorer({ root, onSelectPatient }: GraphExplorerProps) {
+export function GraphExplorer({ root, onSelectPatient, library }: GraphExplorerProps) {
   const [depth, setDepth] = useState<GraphDepth>(2);
   const [filters, setFilters] = useState<GraphFiltersState>(ALL_TYPES_ON);
   const [selected, setSelected] = useState<SelectedNode | null>(null);
@@ -239,15 +242,27 @@ export function GraphExplorer({ root, onSelectPatient }: GraphExplorerProps) {
 
         {state.kind === "success" && payload && payload.nodes.length > 0 ? (
           <>
-            <GraphCanvas
-              ref={canvasRef}
-              nodes={visible.nodes}
-              edges={visible.edges}
-              rootNodeId={rootNode?.id ?? ""}
-              selectedNodeId={selected?.node.id ?? null}
-              onSelectNode={handleSelectNode}
-              onDeselect={() => setSelected(null)}
-            />
+            {library === "cytoscape" ? (
+              <GraphCanvas
+                ref={canvasRef}
+                nodes={visible.nodes}
+                edges={visible.edges}
+                rootNodeId={rootNode?.id ?? ""}
+                selectedNodeId={selected?.node.id ?? null}
+                onSelectNode={handleSelectNode}
+                onDeselect={() => setSelected(null)}
+              />
+            ) : (
+              <ReactFlowCanvas
+                ref={canvasRef}
+                nodes={visible.nodes}
+                edges={visible.edges}
+                rootNodeId={rootNode?.id ?? ""}
+                selectedNodeId={selected?.node.id ?? null}
+                onSelectNode={handleSelectNode}
+                onDeselect={() => setSelected(null)}
+              />
+            )}
             <GraphLegend visible={[...new Set(visible.nodes.map((n) => n.type))]} />
             {!selected ? (
               <p className="pointer-events-none absolute left-2 top-2 rounded-lg border border-border/70 bg-canvas/80 px-2.5 py-1.5 text-[11px] text-ink-muted backdrop-blur">

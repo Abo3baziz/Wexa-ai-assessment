@@ -5,6 +5,7 @@ import { useState } from "react";
 import { EntityPicker } from "@/components/path/EntityPicker";
 import { PathCanvas } from "@/components/path/PathCanvas";
 import { postApi } from "@/lib/fetchApi";
+import type { GraphEngine } from "@/lib/graph/engine";
 import type { PathTargetLabel } from "@/lib/cognodb/queries/pathBetween";
 import type { SearchMode } from "@/lib/cognodb/queries/search";
 import type {
@@ -44,7 +45,7 @@ function pathEdges(result: PathResult): GraphEdge[] {
   }));
 }
 
-export function PathExplorer() {
+export function PathExplorer({ library }: { library: GraphEngine }) {
   const [from, setFrom] = useState<SearchResult | null>(null);
   const [targetType, setTargetType] = useState<PathTargetLabel>("Disease");
   const [to, setTo] = useState<SearchResult | null>(null);
@@ -221,6 +222,7 @@ export function PathExplorer() {
                 nodes={result.nodes}
                 edges={pathEdges(result)}
                 startId={result.nodes[0]!.id}
+                library={library}
               />
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
                 {result.nodes.map((node, i) => (

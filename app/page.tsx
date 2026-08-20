@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { ConnectionBanner } from "@/components/ConnectionBanner";
+import { GraphEngineToggle, useGraphEngine } from "@/components/GraphEngineToggle";
 import { GraphExplorer } from "@/components/graph/GraphExplorer";
 import { PatientOverview } from "@/components/PatientOverview";
 import { PatientSearch } from "@/components/PatientSearch";
@@ -29,6 +30,7 @@ type View =
 
 export default function Home() {
   const [view, setView] = useState<View>({ kind: "empty" });
+  const [engine, setEngine] = useGraphEngine();
 
   const loadPatient = useCallback(async (publicId: string) => {
     setView({ kind: "loading", publicId });
@@ -81,6 +83,7 @@ export default function Home() {
             </span>
           </div>
           <ConnectionBanner />
+          <GraphEngineToggle engine={engine} onChange={setEngine} />
           <button
             type="button"
             onClick={() => setView({ kind: "path" })}
@@ -182,6 +185,7 @@ export default function Home() {
           <GraphExplorer
             root={{ kind: "patient", publicId: view.publicId }}
             onSelectPatient={(publicId) => void loadPatient(publicId)}
+            library={engine}
           />
         ) : null}
 
@@ -189,10 +193,11 @@ export default function Home() {
           <GraphExplorer
             root={{ kind: "entity", summary: view.summary }}
             onSelectPatient={(publicId) => void loadPatient(publicId)}
+            library={engine}
           />
         ) : null}
 
-        {view.kind === "path" ? <PathExplorer /> : null}
+        {view.kind === "path" ? <PathExplorer library={engine} /> : null}
       </main>
     </div>
   );
