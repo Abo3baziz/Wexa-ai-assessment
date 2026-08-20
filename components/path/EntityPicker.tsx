@@ -119,7 +119,7 @@ export function EntityPicker({
           {open && results.length > 0 ? (
             <ul
               role="listbox"
-              className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-card"
+              className="absolute right-0 z-20 mt-1 w-full min-w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border bg-surface shadow-card"
             >
               {results.map((r) => (
                 <li
@@ -150,7 +150,7 @@ export function EntityPicker({
             </ul>
           ) : null}
           {open && results.length === 0 && query.trim().length >= 2 && !loading ? (
-            <p className="absolute z-20 mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink-muted shadow-card">
+            <p className="absolute right-0 z-20 mt-1 w-full min-w-[min(360px,calc(100vw-2rem))] rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink-muted shadow-card">
               No matches for “{query.trim()}”.
             </p>
           ) : null}
