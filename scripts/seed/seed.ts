@@ -71,14 +71,28 @@ function randomNationalId(rng: Rng, used: Set<string>): string {
   return id;
 }
 
+const ENV_PATIENTS = Number.parseInt(process.env.SEED_PATIENTS ?? "", 10);
+
 export const SEED = {
-  patients: 30,
-  doctors: 15,
-  departments: 8,
+  /**
+   * Overridable via SEED_PATIENTS. Default 250: a "large" demo that still keeps
+   * the graph/path explorers fast. Combined with the current-condition caps
+   * below (each patient carries 2–3 *current* diseases/medications, not one per
+   * visit), every disease/medication is shared by only ~20–30 patients — so
+   * depth-2/3 ego graphs stay renderable and shortestPath completes. 500+
+   * patients with the fixed 25-disease/35-medication catalog make the
+   * shared-entity fan-out too dense and break both explorers on the free tier.
+   */
+  patients: Number.isFinite(ENV_PATIENTS) && ENV_PATIENTS > 0 ? ENV_PATIENTS : 250,
+  doctors: 40,
+  departments: 10,
   diseases: 25,
   medications: 35,
   minVisits: 2,
   maxVisits: 5,
+  /** Caps on a patient's *current* HAS_DISEASE/TAKES edges (realistic + sparse). */
+  maxCurrentDiseases: 3,
+  maxCurrentMedications: 2,
 };
 
 const MALE_FIRST_NAMES = [
@@ -275,7 +289,9 @@ export function generateDataset(rng: Rng) {
       const diagCount = randInt(rng, 1, 2);
       for (let d = 0; d < diagCount; d++) {
         const disease = pick(rng, diseases);
-        patientDiseases.add(disease.id);
+        if (patientDiseases.size < SEED.maxCurrentDiseases) {
+          patientDiseases.add(disease.id);
+        }
         diagnoses.push({
           id: `diag-${++diagnosisCounter}`,
           visitId,
@@ -287,7 +303,9 @@ export function generateDataset(rng: Rng) {
       }
 
       const medication = pick(rng, medications);
-      patientMedications.add(medication.id);
+      if (patientMedications.size < SEED.maxCurrentMedications) {
+        patientMedications.add(medication.id);
+      }
       prescriptions.push({
         id: `rx-${++prescriptionCounter}`,
         visitId,
@@ -346,6 +364,23 @@ async function run(session: Session, cypher: string, params: unknown): Promise<v
   await session.run(cypher, params as Record<string, unknown>);
 }
 
+/**
+ * Run an UNWIND statement in chunks so large datasets (1500 patients →
+ * thousands of visits/diagnoses/prescriptions) don't exceed per-request
+ * limits or hold a transaction open too long on the managed DB.
+ */
+const BATCH_SIZE = 500;
+
+async function runBatched(
+  session: Session,
+  cypher: string,
+  rows: readonly unknown[]
+): Promise<void> {
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    await run(session, cypher, { rows: rows.slice(i, i + BATCH_SIZE) });
+  }
+}
+
 async function main() {
   const config = loadCognoDBConfig();
   const driver = neo4j.driver(
@@ -394,10 +429,10 @@ async function main() {
       "UNWIND $rows AS row MERGE (n:Doctor {id: row.id}) SET n.name = row.name, n.specialty = row.specialty",
       { rows: data.doctors }
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MERGE (n:Patient {id: row.id}) SET n.publicId = row.publicId, n.nationalId = row.nationalId, n.firstName = row.firstName, n.lastName = row.lastName, n.dateOfBirth = row.dateOfBirth, n.gender = row.gender",
-      { rows: data.patients }
+      data.patients
     );
 
     await run(
@@ -405,35 +440,35 @@ async function main() {
       "UNWIND $rows AS row MATCH (doc:Doctor {id: row.doctorId}) MATCH (d:Department {id: row.deptId}) MERGE (doc)-[:WORKS_IN]->(d)",
       { rows: data.doctorEdges }
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MATCH (p:Patient {id: row.patientId}) MERGE (v:Visit {id: row.id}) SET v.visitDate = row.visitDate, v.reason = row.reason, v.notes = row.notes MERGE (p)-[:HAD_VISIT]->(v)",
-      { rows: data.visits }
+      data.visits
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MATCH (v:Visit {id: row.id}) MATCH (doc:Doctor {id: row.doctorId}) MERGE (v)-[:TREATED_BY]->(doc)",
-      { rows: data.visits }
+      data.visits
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MATCH (v:Visit {id: row.visitId}) MERGE (dg:Diagnosis {id: row.id}) SET dg.diagnosedAt = row.diagnosedAt, dg.severity = row.severity, dg.notes = row.notes MERGE (v)-[:RESULTED_IN]->(dg) WITH dg, row MATCH (dis:Disease {id: row.diseaseId}) MERGE (dg)-[:FOR_DISEASE]->(dis)",
-      { rows: data.diagnoses }
+      data.diagnoses
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MATCH (v:Visit {id: row.visitId}) MERGE (rx:Prescription {id: row.id}) SET rx.prescribedAt = row.prescribedAt, rx.dosage = row.dosage, rx.frequency = row.frequency, rx.duration = row.duration MERGE (v)-[:GENERATED]->(rx) WITH rx, row MATCH (m:Medication {id: row.medicationId}) MERGE (rx)-[:FOR_MEDICATION]->(m)",
-      { rows: data.prescriptions }
+      data.prescriptions
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MATCH (p:Patient {id: row.patientId}) MATCH (dis:Disease {id: row.targetId}) MERGE (p)-[r:HAS_DISEASE]->(dis) SET r.status = row.status, r.since = row.since",
-      { rows: data.diseaseEdges }
+      data.diseaseEdges
     );
-    await run(
+    await runBatched(
       session,
       "UNWIND $rows AS row MATCH (p:Patient {id: row.patientId}) MATCH (m:Medication {id: row.targetId}) MERGE (p)-[r:TAKES]->(m) SET r.status = row.status, r.since = row.since",
-      { rows: data.medicationEdges }
+      data.medicationEdges
     );
 
     console.log("Seed complete.");
