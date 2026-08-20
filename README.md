@@ -89,6 +89,34 @@ Layering rules that keep the demo honest:
   [`docs/data-model.md`](docs/data-model.md); the Mermaid diagram below mirrors
   it and must stay in sync.
 
+## Why two graph rendering libraries?
+
+The app ships **two** graph renderers — **Cytoscape.js** and **React Flow** —
+behind a header toggle. This is deliberate, and neither is strictly required
+for the app to work. Rendering is a *presentational* concern: the same
+`GraphPayload` returned by the API is drawn by either engine, and both stay in
+sync through shared, engine-agnostic logic in `lib/graph/`. The reasons:
+
+- **Renderers are swappable front-ends over the same data.** Graph traversal
+  (Cypher), payload shaping, and layouts live separately from drawing. The
+  database, queries, and API never change when the renderer changes — the
+  toggle is a live demonstration that visualization is a decoupled concern.
+- **Canvas vs. SVG trade-offs.** Cytoscape.js draws to a `<canvas>`, which
+  scales to large, dense graphs and ships mature graph layouts (force-directed
+  `cose-bilkent`, breadthfirst) — a good fit for free-form exploration. React
+  Flow renders every node as a real React component over SVG, which makes nodes
+  fully stylable and keyboard-accessible in the DOM and produces crisp,
+  always-readable SVG edge labels — a good fit for tree/hierarchical layouts
+  (here via ElkJS).
+- **Layout is a separate concern from drawing.** The React Flow renderer does
+  not reuse Cytoscape's layout; it runs its own algorithm (ElkJS layered tree).
+  Two engines, two independent layout pipelines, both fed the same data, both
+  labeling every relationship.
+- **It is an honest, side-by-side comparison.** Instead of asserting one
+  library is "better", the app lets you flip between them on identical data
+  and see for yourself how each handles selection, dimming, zooming, and edge
+  labels — the kind of decision a team would otherwise make speculatively.
+
 ## Data model
 
 8 node types and 9 typed, directed relationships. `Diagnosis` and
@@ -179,8 +207,37 @@ npm run test:integration  # live-DB tests, requires COGNODB_URI
 ## Demo
 
 - **Live demo**: _pending deployment (Vercel)_
-- **Screenshots**: _pending (final cleanup)_
 - **Video walkthrough**: _pending_
+
+### Screenshots
+
+**Home** — hospital staff or doctors can search for patients and other entities
+by name, national ID, or entity type. The status badge in the header shows
+whether the CognoDB connection is live, the **Engine** menu switches the graph
+renderer between Cytoscape.js and React Flow, and **Path Explorer** lets you
+trace the shortest connection between a patient and a disease, medication,
+doctor, or another patient.
+
+![Home page](screenshots/home-page.png)
+
+**Patient Profile** — after selecting a patient you see their profile: current
+conditions and current medications at a glance, plus **Related Patients** —
+other patients connected through shared diseases, medications, or doctors.
+From here you can open the full relationship graph.
+
+![Patient profile](screenshots/patient-profile.png)
+
+**Graph Explorer** — the relationship graph of a selected patient, laid out as
+a tree and rendered by Cytoscape.js or React Flow. Filter nodes by type, select
+a node to inspect its details and dim the rest, and expand relationships — with
+the relationship type labeled on every connection.
+
+![Graph explorer](screenshots/graph-explorer.png)
+
+**Path Explorer** — the shortest path between a patient and a target entity,
+showing each hop in order with its relationship label.
+
+![Path explorer](screenshots/path-explorer.png)
 
 ## Repository map
 
