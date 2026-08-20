@@ -2,13 +2,14 @@ import { runQuery } from "./runner";
 
 /**
  * Search modes the client can select. Each maps to a `$type` filter (post-UNION)
- * and, for patients, a `$mode` that controls whether name matching is included
- * (`national-id` matches only the national ID; other patient modes also match
- * the name, to disambiguate name collisions).
+ * and, for patients, controls whether name and/or national ID matching applies:
+ * `name` matches the name only, `national-id` matches the ID only, and the
+ * other patient modes (`patient-name`, `all`) match either.
  */
 export const SEARCH_MODES = [
   "all",
   "national-id",
+  "name",
   "patient-name",
   "doctor",
   "medication",
@@ -20,12 +21,12 @@ export type SearchMode = (typeof SEARCH_MODES)[number];
 
 /**
  * The node type a non-"all" mode should filter to. Empty string means "all".
- * `$mode` is passed to the query and compared as a value (never interpolated);
- * `$type` is likewise compared against the returned `type` column.
+ * `$type` is compared against the returned `type` column (never interpolated).
  */
 export const SEARCH_MODE_TYPE: Record<SearchMode, string> = {
   all: "",
   "national-id": "Patient",
+  name: "Patient",
   "patient-name": "Patient",
   doctor: "Doctor",
   medication: "Medication",
@@ -44,8 +45,8 @@ export interface SearchRow {
 export const SEARCH_QUERY = `
   CALL {
     MATCH (p:Patient)
-    WHERE ($mode <> 'national-id' AND toLower(p.firstName + ' ' + p.lastName) CONTAINS toLower($q))
-       OR toLower(p.nationalId) CONTAINS toLower($q)
+    WHERE ($matchName AND toLower(p.firstName + ' ' + p.lastName) CONTAINS toLower($q))
+       OR ($matchId AND toLower(p.nationalId) CONTAINS toLower($q))
     RETURN 'Patient' AS type, p.id AS id, p.firstName + ' ' + p.lastName AS label,
       p.nationalId AS subtitle, p.publicId AS publicId
     UNION
@@ -69,10 +70,14 @@ export const SEARCH_QUERY = `
 `;
 
 export function searchEntities(q: string, limit = 8, mode: SearchMode = "all") {
+  const matchName = mode === "all" || mode === "patient-name" || mode === "name";
+  const matchId = mode === "all" || mode === "patient-name" || mode === "national-id";
   return runQuery<SearchRow>(SEARCH_QUERY, {
     q,
     limit,
     mode,
     type: SEARCH_MODE_TYPE[mode],
+    matchName,
+    matchId,
   });
 }

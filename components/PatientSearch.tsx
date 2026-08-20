@@ -30,6 +30,7 @@ const TYPE_DOT: Record<NodeType, string> = {
 type Mode =
   | "all"
   | "national-id"
+  | "name"
   | "patient-name"
   | "doctor"
   | "medication"
@@ -38,6 +39,7 @@ type Mode =
 
 const MODES: ReadonlyArray<{ value: Mode; label: string }> = [
   { value: "all", label: "All" },
+  { value: "name", label: "Name" },
   { value: "national-id", label: "National ID" },
   { value: "patient-name", label: "Name + ID" },
   { value: "doctor", label: "Doctor" },
@@ -49,6 +51,7 @@ const MODES: ReadonlyArray<{ value: Mode; label: string }> = [
 const PLACEHOLDER: Record<Mode, string> = {
   all: "Search a patient, national ID, doctor, disease, medication, or department",
   "national-id": "Search by national ID",
+  name: "Search a patient by name",
   "patient-name": "Search a patient by name or national ID",
   doctor: "Search a doctor by name",
   medication: "Search a medication by name",

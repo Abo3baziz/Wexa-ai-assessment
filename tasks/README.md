@@ -39,6 +39,7 @@ _None._ This is a synthetic-data demonstration app; no P0 items.
 | T-021 | [graph-engine-toggle](./T-021-graph-engine-toggle.md) | Graph engine toggle: feature-parity React Flow renderer | done |
 | T-022 | [elkjs-layout](./T-022-elkjs-layout.md) | ElkJS tree layout + always-readable edge labels for React Flow | done |
 | T-023 | [path-to-search-width](./T-023-path-to-search-width.md) | Widen path explorer "To" search results dropdown | done |
+| T-024 | [patient-name-search](./T-024-patient-name-search.md) | Pure "Name" patient search mode | done |
 | T-016 | [final-cleanup](./T-016-final-cleanup.md) | Screenshots, screen recording, repo cleanup | todo |
 
 ### P3 (future / product)

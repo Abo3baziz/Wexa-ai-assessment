@@ -111,6 +111,7 @@ describe("requireSearchMode", () => {
   it("accepts known modes and rejects unknown ones", () => {
     expect(requireSearchMode("patient-name")).toBe("patient-name");
     expect(requireSearchMode("national-id")).toBe("national-id");
+    expect(requireSearchMode("name")).toBe("name");
     expect(requireSearchMode("doctor")).toBe("doctor");
     expectRejects(() => requireSearchMode("hospital"));
   });
