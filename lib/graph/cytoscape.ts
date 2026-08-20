@@ -194,6 +194,23 @@ export function runForceLayout(cy: Core): void {
   cy.layout({ ...LAYOUT_OPTIONS, stop: () => fitGraph(cy) }).run();
 }
 
+/**
+ * Linear left-to-right layout for a shortestPath result: nodes form a single
+ * chain, so breadthfirst with spacing renders a clean horizontal spine.
+ */
+export function runPathLayout(cy: Core): void {
+  cy.layout({
+    name: "breadthfirst",
+    directed: false,
+    spacingFactor: 1.4,
+    animate: "end",
+    animationDuration: 400,
+    animationEasing: "ease-out",
+    padding: 40,
+    stop: () => fitGraph(cy),
+  } as LayoutOptions).run();
+}
+
 export function zoomBy(cy: Core, factor: number): void {
   cy.zoom({
     level: cy.zoom() * factor,

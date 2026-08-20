@@ -51,3 +51,26 @@ export function getApiCached<T>(path: string): Promise<T> {
   }
   return pending;
 }
+
+/**
+ * POST a JSON body to an API route and return the typed payload, throwing an
+ * ApiClientError (with a friendly message + retry flag) on failure.
+ */
+export async function postApi<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  const parsed = (await res.json().catch(() => null)) as ApiEnvelope<T> | null;
+
+  if (!res.ok || !parsed || !parsed.ok) {
+    const message = parsed?.error?.message ?? "Something went wrong.";
+    const retry = parsed?.error?.retry ?? false;
+    throw new ApiClientError(message, res.status, retry);
+  }
+
+  return parsed.data as T;
+}

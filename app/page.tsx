@@ -6,6 +6,7 @@ import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { GraphExplorer } from "@/components/graph/GraphExplorer";
 import { PatientOverview } from "@/components/PatientOverview";
 import { PatientSearch } from "@/components/PatientSearch";
+import { PathExplorer } from "@/components/path/PathExplorer";
 import { RelatedPatients } from "@/components/RelatedPatients";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
@@ -23,7 +24,8 @@ type View =
   | { kind: "success"; data: PatientOverviewData }
   | { kind: "error"; message: string; retry: boolean; publicId: string }
   | { kind: "graph"; publicId: string }
-  | { kind: "entity"; summary: EntitySummary };
+  | { kind: "entity"; summary: EntitySummary }
+  | { kind: "path" };
 
 export default function Home() {
   const [view, setView] = useState<View>({ kind: "empty" });
@@ -79,6 +81,18 @@ export default function Home() {
             </span>
           </div>
           <ConnectionBanner />
+          <button
+            type="button"
+            onClick={() => setView({ kind: "path" })}
+            aria-pressed={view.kind === "path"}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              view.kind === "path"
+                ? "bg-brand text-white"
+                : "border border-border bg-surface text-ink-muted hover:bg-surface-2 hover:text-ink"
+            }`}
+          >
+            Path Explorer
+          </button>
         </div>
         <div className="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
           <PatientSearch
@@ -91,7 +105,7 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        {view.kind === "success" || view.kind === "entity" || view.kind === "graph" ? (
+        {view.kind === "success" || view.kind === "entity" || view.kind === "graph" || view.kind === "path" ? (
           <nav
             aria-label="Breadcrumb"
             className="mb-4 flex items-center gap-1.5 text-sm"
@@ -106,7 +120,9 @@ export default function Home() {
             <span className="text-ink-muted" aria-hidden="true">
               ›
             </span>
-            {view.kind === "graph" ? (
+            {view.kind === "path" ? (
+              <span className="text-ink">Path Explorer</span>
+            ) : view.kind === "graph" ? (
               <>
                 <button
                   type="button"
@@ -175,6 +191,8 @@ export default function Home() {
             onSelectPatient={(publicId) => void loadPatient(publicId)}
           />
         ) : null}
+
+        {view.kind === "path" ? <PathExplorer /> : null}
       </main>
     </div>
   );

@@ -1,15 +1,6 @@
 import type { PathStepRow } from "@/lib/cognodb/queries/pathBetween";
-import type { GraphNode, NodeType, PathLink, PathResult } from "@/types";
+import type { GraphNode, PathLink, PathResult } from "@/types";
 import { typeFromLabel } from "./record";
-
-/** Enforce the restricted-pair invariant: only hops between a Patient and the
- * allowed target labels (Disease/Medication/Doctor/Patient). */
-const ALLOWED_NODE_TYPES: ReadonlySet<NodeType> = new Set([
-  "Patient",
-  "Disease",
-  "Medication",
-  "Doctor",
-]);
 
 function routeLabel(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -18,6 +9,9 @@ function routeLabel(value: unknown): string {
 /**
  * Map a shortestPath result into a PathResult. Returns `found: false` when no
  * path exists (empty rows) or when the shortestPath result is malformed.
+ * The restricted-pair invariant (Patient ↔ Disease/Medication/Doctor/Patient)
+ * is enforced by the picker and the route's `requirePathTargetLabel`; nodes in
+ * the middle of a valid path may be any entity (Visit, Department, …).
  */
 export function mapPathResult(rows: PathStepRow[]): PathResult {
   const row = rows[0];
@@ -30,7 +24,7 @@ export function mapPathResult(rows: PathStepRow[]): PathResult {
     return {
       id: routeLabel(n.id),
       type: type ?? "Patient",
-      label: routeLabel(n.label),
+      label: routeLabel(n.title) || routeLabel(n.label),
       properties: {},
     };
   });
@@ -49,9 +43,12 @@ export function mapPathResult(rows: PathStepRow[]): PathResult {
     });
   }
 
-  const valid = nodes.every(
-    (n) => n.id !== "" && ALLOWED_NODE_TYPES.has(n.type)
-  );
+  const knownTypes = nodes.every((n) => {
+    const type = typeFromLabel(routeLabel(n.label));
+    return type !== null;
+  });
+
+  const valid = nodes.every((n) => n.id !== "") && knownTypes;
 
   return { found: valid && nodes.length > 0, links, nodes };
 }

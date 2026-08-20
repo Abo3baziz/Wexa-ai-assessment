@@ -6,7 +6,7 @@ import { runQuery } from "./runner";
  * so users discover *why* entities are connected without meaningless detours.
  */
 export interface PathStepRow {
-  nodes: Array<{ id: string; label: string }>;
+  nodes: Array<{ id: string; label: string; title: string }>;
   relationships: Array<{ type: string }>;
 }
 
@@ -52,7 +52,11 @@ export function findPathBetween({
     MATCH (b:${toLabel} {id: $toId})
     MATCH p = shortestPath((a)-[*1..${depth}]-(b))
     RETURN
-      [n IN nodes(p) | {id: coalesce(n.publicId, n.id), label: head(labels(n))}] AS nodes,
+      [n IN nodes(p) | {
+        id: coalesce(n.publicId, n.id),
+        label: head(labels(n)),
+        title: coalesce(n.name, n.firstName + ' ' + n.lastName, n.id)
+      }] AS nodes,
       [r IN relationships(p) | {type: type(r)}] AS relationships
   `;
   return runQuery<PathStepRow>(query, { fromId, toId });
